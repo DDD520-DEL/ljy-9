@@ -12,13 +12,28 @@ import Exchange from './pages/Exchange';
 import { useStore } from './stores/useStore';
 
 function App() {
-  const { fetchMetaData, fetchCartridges, fetchStats, fetchAchievements } = useStore();
+  const {
+    fetchMetaData,
+    fetchCartridges,
+    fetchStats,
+    fetchAchievements,
+    fetchUnreadCount,
+    fetchNotifications,
+  } = useStore();
 
   useEffect(() => {
     fetchMetaData();
     fetchCartridges();
     fetchStats();
     fetchAchievements();
+    fetchUnreadCount();
+    fetchNotifications();
+
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (

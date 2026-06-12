@@ -7,6 +7,7 @@ import type {
   Stats,
   Filters,
   PriceHistory,
+  ExchangeNotification,
 } from '../types';
 
 interface AppState {
@@ -18,6 +19,8 @@ interface AppState {
   achievements: Achievement[];
   exchangeRequests: ExchangeRequest[];
   matches: MatchResult[];
+  notifications: ExchangeNotification[];
+  unreadCount: number;
   stats: Stats | null;
   platforms: string[];
   seriesList: string[];
@@ -42,6 +45,10 @@ interface AppState {
   ) => Promise<void>;
   fetchMatches: () => Promise<void>;
   fetchMetaData: () => Promise<void>;
+  fetchNotifications: () => Promise<void>;
+  fetchUnreadCount: () => Promise<void>;
+  markNotificationAsRead: (id: string) => Promise<void>;
+  markAllNotificationsAsRead: () => Promise<void>;
 }
 
 const API_BASE = '/api';
@@ -61,6 +68,8 @@ export const useStore = create<AppState>((set, get) => ({
   achievements: [],
   exchangeRequests: [],
   matches: [],
+  notifications: [],
+  unreadCount: 0,
   stats: null,
   platforms: [],
   seriesList: [],
@@ -279,6 +288,56 @@ export const useStore = create<AppState>((set, get) => ({
       set({ platforms, seriesList, publishers });
     } catch (error) {
       console.error('Failed to fetch meta data:', error);
+    }
+  },
+
+  fetchNotifications: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/notifications`);
+      const data = await res.json();
+      set({ notifications: data });
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  },
+
+  fetchUnreadCount: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/notifications/unread-count`);
+      const data = await res.json();
+      set({ unreadCount: data.count });
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  },
+
+  markNotificationAsRead: async (id: string) => {
+    try {
+      await fetch(`${API_BASE}/notifications/${id}/read`, {
+        method: 'PUT',
+      });
+      set((state) => ({
+        notifications: state.notifications.map((n) =>
+          n.id === id ? { ...n, isRead: true } : n
+        ),
+        unreadCount: Math.max(0, state.unreadCount - 1),
+      }));
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  },
+
+  markAllNotificationsAsRead: async () => {
+    try {
+      await fetch(`${API_BASE}/notifications/read-all`, {
+        method: 'PUT',
+      });
+      set((state) => ({
+        notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
+        unreadCount: 0,
+      }));
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
     }
   },
 }));

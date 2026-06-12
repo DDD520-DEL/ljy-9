@@ -4,6 +4,8 @@ import cartridgeRoutes from './routes/cartridges';
 import achievementRoutes from './routes/achievements';
 import exchangeRoutes from './routes/exchange';
 import statsRoutes from './routes/stats';
+import notificationRoutes from './routes/notifications';
+import { notificationService } from './services/notificationService';
 
 const app = express();
 const PORT = 3001;
@@ -11,10 +13,13 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+notificationService.seedInitialNotifications();
+
 app.use('/api/cartridges', cartridgeRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/exchange', exchangeRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

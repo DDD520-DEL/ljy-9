@@ -1,5 +1,6 @@
 import type { ExchangeRequest, MatchResult } from '../types';
 import { exchangeRequests, currentUserId, currentUserName } from '../data/mockData';
+import { notificationService } from './notificationService';
 
 let exchangeStore = [...exchangeRequests];
 
@@ -31,6 +32,7 @@ export const exchangeService = {
       createdAt: new Date().toISOString(),
     };
     exchangeStore.push(newRequest);
+    notificationService.generateNotificationsForNewRequest(newRequest, exchangeStore);
     return newRequest;
   },
 

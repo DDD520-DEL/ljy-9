@@ -14,8 +14,15 @@ import {
 import { formatDate, getConditionLabel } from '../utils/format';
 
 const Exchange = () => {
-  const { exchangeRequests, matches, fetchExchangeRequests, fetchMatches, addExchangeRequest } =
-    useStore();
+  const {
+    exchangeRequests,
+    matches,
+    fetchExchangeRequests,
+    fetchMatches,
+    addExchangeRequest,
+    fetchUnreadCount,
+    fetchNotifications,
+  } = useStore();
   const [activeTab, setActiveTab] = useState<'all' | 'want' | 'have' | 'matches'>('all');
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [newRequest, setNewRequest] = useState({
@@ -34,6 +41,8 @@ const Exchange = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await addExchangeRequest(newRequest);
+    await fetchUnreadCount();
+    await fetchNotifications();
     setShowNewRequest(false);
     setNewRequest({
       type: 'WANT',

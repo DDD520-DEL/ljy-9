@@ -395,6 +395,39 @@ export const achievements: Achievement[] = [
 
 export const exchangeRequests: ExchangeRequest[] = [
   {
+    id: 'mywant1',
+    userId: 'user1',
+    userName: '像素收藏家',
+    type: 'WANT',
+    cartridgeTitle: '超级马里奥兄弟',
+    platform: 'FC',
+    description: '求购一张品相好的初代马里奥，箱说全优先',
+    condition: 'NEAR_MINT',
+    createdAt: '2024-05-28T00:00:00Z',
+  },
+  {
+    id: 'mywant2',
+    userId: 'user1',
+    userName: '像素收藏家',
+    type: 'WANT',
+    cartridgeTitle: '口袋妖怪',
+    platform: 'GB',
+    description: '收口袋妖怪系列任意版本，功能正常即可',
+    condition: 'GOOD',
+    createdAt: '2024-05-30T00:00:00Z',
+  },
+  {
+    id: 'mywant3',
+    userId: 'user1',
+    userName: '像素收藏家',
+    type: 'WANT',
+    cartridgeTitle: '最终幻想',
+    platform: 'SFC',
+    description: '求购SFC平台最终幻想系列，FF4/5/6都可以',
+    condition: 'VERY_GOOD',
+    createdAt: '2024-06-02T00:00:00Z',
+  },
+  {
     id: 'ex1',
     userId: 'user2',
     userName: '复古玩家小王',
@@ -448,6 +481,17 @@ export const exchangeRequests: ExchangeRequest[] = [
     description: '成色一般，卡带功能正常',
     condition: 'FAIR',
     createdAt: '2024-06-11T00:00:00Z',
+  },
+  {
+    id: 'ex6',
+    userId: 'user7',
+    userName: 'SFC老玩家',
+    type: 'HAVE',
+    cartridgeTitle: '最终幻想VI',
+    platform: 'SFC',
+    description: 'FF6日版，箱说全，品相近新',
+    condition: 'NEAR_MINT',
+    createdAt: '2024-06-12T00:00:00Z',
   },
 ];
 

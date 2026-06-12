@@ -64,6 +64,23 @@ export interface MatchResult {
   details: string;
 }
 
+export interface ExchangeNotification {
+  id: string;
+  userId: string;
+  type: 'MATCH_FOUND';
+  matchRequestId: string;
+  matchUserName: string;
+  matchCartridgeTitle: string;
+  matchPlatform: string;
+  matchType: 'WANT' | 'HAVE';
+  myRequestId: string;
+  myCartridgeTitle: string;
+  score: number;
+  details: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface Stats {
   totalCartridges: number;
   totalValue: number;

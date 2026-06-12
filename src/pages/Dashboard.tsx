@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import StatsCard from '../components/StatsCard';
@@ -19,14 +19,20 @@ const Dashboard = () => {
     fetchPriceHistory,
   } = useStore();
 
+  const priceFetchedRef = useRef(false);
+
   useEffect(() => {
     fetchCartridges();
     fetchStats();
     fetchAchievements();
-    if (cartridges.length > 0) {
+  }, []);
+
+  useEffect(() => {
+    if (!priceFetchedRef.current && cartridges.length > 0) {
+      priceFetchedRef.current = true;
       fetchPriceHistory(cartridges[0].id);
     }
-  }, []);
+  }, [cartridges]);
 
   const recentAdditionsList = stats?.recentAdditions || [];
   const latestAchievements = achievements.filter((a) => a.unlocked).slice(0, 4);

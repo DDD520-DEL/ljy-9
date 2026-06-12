@@ -3,6 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import PixelButton from '../components/PixelButton';
 import { ArrowLeft, Package, BookOpen, Disc, Upload } from 'lucide-react';
+import type { Cartridge } from '../types';
+
+type CartridgeFormData = Omit<Cartridge, 'id' | 'createdAt' | 'updatedAt'>;
 
 const AddCartridge = () => {
   const navigate = useNavigate();
@@ -10,22 +13,7 @@ const AddCartridge = () => {
   const editId = searchParams.get('id');
   const { addCartridge, updateCartridge, selectedCartridge, fetchCartridge, platforms, seriesList, publishers } = useStore();
 
-  const [formData, setFormData] = useState<{
-    title: string;
-    platform: string;
-    series: string;
-    publisher: string;
-    releaseYear: number;
-    region: 'JPN' | 'USA' | 'EUR' | 'CHN' | 'OTHER';
-    condition: 'MINT' | 'NEAR_MINT' | 'VERY_GOOD' | 'GOOD' | 'FAIR' | 'POOR';
-    hasBox: boolean;
-    hasManual: boolean;
-    hasCartridge: boolean;
-    purchasePrice: number;
-    purchaseDate: string;
-    notes: string;
-    coverImage: string;
-  }>({
+  const [formData, setFormData] = useState<CartridgeFormData>({
     title: '',
     platform: '',
     series: '',
@@ -74,7 +62,7 @@ const AddCartridge = () => {
     if (editId) {
       await updateCartridge(editId, formData);
     } else {
-      await addCartridge(formData as any);
+      await addCartridge(formData);
     }
     navigate('/collection');
   };

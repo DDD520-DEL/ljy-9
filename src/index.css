@@ -109,6 +109,14 @@ body {
   text-shadow: 0 0 10px rgba(236, 72, 153, 0.8), 0 0 20px rgba(236, 72, 153, 0.4);
 }
 
+.neon-glow-amber {
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.8), 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.neon-glow-green {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.8), 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
 .card-pixel {
   background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
   border: 3px solid #374151;

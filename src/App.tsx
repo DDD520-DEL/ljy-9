@@ -9,6 +9,7 @@ import Market from './pages/Market';
 import Achievements from './pages/Achievements';
 import Showcase from './pages/Showcase';
 import Exchange from './pages/Exchange';
+import YearlyReview from './pages/YearlyReview';
 import { useStore } from './stores/useStore';
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/showcase" element={<Showcase />} />
           <Route path="/exchange" element={<Exchange />} />
+          <Route path="/yearly-review" element={<YearlyReview />} />
         </Routes>
       </main>
     </div>

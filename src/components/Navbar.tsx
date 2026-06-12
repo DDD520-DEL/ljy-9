@@ -13,6 +13,7 @@ import {
   CheckCheck,
   ArrowRight,
   User,
+  Sparkles,
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { formatRelativeTime } from '../utils/format';
@@ -34,6 +35,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: '仪表盘', icon: LayoutDashboard },
     { path: '/collection', label: '藏品库', icon: Library },
+    { path: '/yearly-review', label: '年度回顾', icon: Sparkles },
     { path: '/market', label: '行情中心', icon: TrendingUp },
     { path: '/achievements', label: '成就中心', icon: Trophy },
     { path: '/showcase', label: '我的展示', icon: Share2 },

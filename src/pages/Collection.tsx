@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import Sidebar from '../components/Sidebar';
 import CartridgeCard from '../components/CartridgeCard';
-import { Filter, Grid, List, Plus, Search, SortAsc } from 'lucide-react';
+import { Filter, Grid, List, Plus, Search, SortAsc, FileText, Download, Loader2 } from 'lucide-react';
+import { generateReportData } from '../utils/report';
+import { exportReportPDF } from '../utils/pdfExport';
 
 const Collection = () => {
   const {
@@ -20,6 +22,21 @@ const Collection = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportReport = async () => {
+    if (isExporting || cartridges.length === 0) return;
+    
+    setIsExporting(true);
+    try {
+      const reportData = generateReportData(cartridges);
+      await exportReportPDF(reportData);
+    } catch (error) {
+      console.error('导出报告失败:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   useEffect(() => {
     fetchCartridges();
@@ -60,6 +77,25 @@ const Collection = () => {
               >
                 <Filter className="w-4 h-4" />
                 筛选
+              </button>
+
+              <button
+                onClick={handleExportReport}
+                disabled={isExporting || cartridges.length === 0}
+                className="pixel-btn pixel-btn-cyan text-xs flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4" />
+                    <Download className="w-4 h-4" />
+                    导出报告
+                  </>
+                )}
               </button>
 
               <Link

@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import StatsCard from '../components/StatsCard';
 import CartridgeCard from '../components/CartridgeCard';
 import AchievementBadge from '../components/AchievementBadge';
 import PriceChart from '../components/PriceChart';
-import { Plus, ArrowRight, TrendingUp, Award } from 'lucide-react';
+import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2 } from 'lucide-react';
+import { generateReportData } from '../utils/report';
+import { exportReportPDF } from '../utils/pdfExport';
 
 const Dashboard = () => {
   const {
@@ -19,7 +21,22 @@ const Dashboard = () => {
     fetchPriceHistory,
   } = useStore();
 
+  const [isExporting, setIsExporting] = useState(false);
   const priceFetchedRef = useRef(false);
+
+  const handleExportReport = async () => {
+    if (isExporting || cartridges.length === 0) return;
+    
+    setIsExporting(true);
+    try {
+      const reportData = generateReportData(cartridges);
+      await exportReportPDF(reportData);
+    } catch (error) {
+      console.error('导出报告失败:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   useEffect(() => {
     fetchCartridges();
@@ -34,19 +51,42 @@ const Dashboard = () => {
     }
   }, [cartridges]);
 
+  const safeAchievements = Array.isArray(achievements) ? achievements : [];
+  const safeCartridges = Array.isArray(cartridges) ? cartridges : [];
+
   const recentAdditionsList = stats?.recentAdditions || [];
-  const latestAchievements = achievements.filter((a) => a.unlocked).slice(0, 4);
-  const sampleCartridge = cartridges[0];
+  const latestAchievements = safeAchievements.filter((a) => a.unlocked).slice(0, 4);
+  const sampleCartridge = safeCartridges[0];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="mb-8">
-        <h1 className="font-pixel text-2xl text-white mb-2 neon-glow-purple">
-          欢迎回来，收藏家！
-        </h1>
-        <p className="font-retro text-gray-400 text-lg">
-          管理你的中古游戏卡带收藏，追踪市场行情
-        </p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="font-pixel text-2xl text-white mb-2 neon-glow-purple">
+            欢迎回来，收藏家！
+          </h1>
+          <p className="font-retro text-gray-400 text-lg">
+            管理你的中古游戏卡带收藏，追踪市场行情
+          </p>
+        </div>
+        <button
+          onClick={handleExportReport}
+          disabled={isExporting || cartridges.length === 0}
+          className="pixel-btn pixel-btn-cyan text-xs flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isExporting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              生成中...
+            </>
+          ) : (
+            <>
+              <FileText className="w-4 h-4" />
+              <Download className="w-4 h-4" />
+              导出估值报告
+            </>
+          )}
+        </button>
       </div>
 
       <div className="mb-8">

@@ -10,6 +10,10 @@ interface SidebarProps {
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { filters, setFilters, platforms, seriesList, publishers } = useStore();
 
+  const safePlatforms = Array.isArray(platforms) ? platforms : [];
+  const safeSeriesList = Array.isArray(seriesList) ? seriesList : [];
+  const safePublishers = Array.isArray(publishers) ? publishers : [];
+
   const toggleFilter = (category: keyof typeof filters, value: string) => {
     const current = filters[category] as string[];
     const updated = current.includes(value)
@@ -76,7 +80,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <div>
             <h4 className="font-retro text-lg text-gray-300 mb-2">平台</h4>
             <div className="space-y-1">
-              {platforms.map((platform) => (
+              {safePlatforms.map((platform) => (
                 <label
                   key={platform}
                   className="flex items-center gap-2 cursor-pointer group"
@@ -98,7 +102,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <div>
             <h4 className="font-retro text-lg text-gray-300 mb-2">系列</h4>
             <div className="space-y-1 max-h-40 overflow-y-auto">
-              {seriesList.map((series) => (
+              {safeSeriesList.map((series) => (
                 <label
                   key={series}
                   className="flex items-center gap-2 cursor-pointer group"
@@ -120,7 +124,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <div>
             <h4 className="font-retro text-lg text-gray-300 mb-2">发行商</h4>
             <div className="space-y-1 max-h-40 overflow-y-auto">
-              {publishers.map((publisher) => (
+              {safePublishers.map((publisher) => (
                 <label
                   key={publisher}
                   className="flex items-center gap-2 cursor-pointer group"

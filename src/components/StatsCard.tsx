@@ -5,7 +5,7 @@ import { formatPrice } from '../utils/format';
 const StatsCard = () => {
   const { stats } = useStore();
 
-  if (!stats) return null;
+  if (!stats || !stats.valueChange || !stats.achievementsProgress) return null;
 
   const statItems = [
     {

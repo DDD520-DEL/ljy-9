@@ -49,6 +49,16 @@ interface AppState {
   fetchUnreadCount: () => Promise<void>;
   markNotificationAsRead: (id: string) => Promise<void>;
   markAllNotificationsAsRead: () => Promise<void>;
+  previewImport: (rows: Record<string, any>[]) => Promise<{
+    valid: { row: number; data: Omit<Cartridge, 'id' | 'createdAt' | 'updatedAt'>; original: Record<string, any> }[];
+    duplicates: { row: number; data: Record<string, any>; reason: string }[];
+    errors: { row: number; data: Record<string, any>; reason: string }[];
+  } | null>;
+  bulkImport: (rows: Record<string, any>[]) => Promise<{
+    imported: Cartridge[];
+    skipped: { row: number; data: Record<string, any>; reason: string }[];
+    errors: { row: number; data: Record<string, any>; reason: string }[];
+  } | null>;
 }
 
 const API_BASE = '/api';
@@ -338,6 +348,46 @@ export const useStore = create<AppState>((set, get) => ({
       }));
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
+    }
+  },
+
+  previewImport: async (rows) => {
+    try {
+      const res = await fetch(`${API_BASE}/cartridges/preview-import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error('Failed to preview import:', error);
+      return null;
+    }
+  },
+
+  bulkImport: async (rows) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/cartridges/bulk-import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+      if (data.imported && data.imported.length > 0) {
+        set((state) => ({
+          cartridges: [...data.imported, ...state.cartridges],
+        }));
+        get().fetchStats();
+        get().fetchAchievements();
+      }
+      return data;
+    } catch (error) {
+      console.error('Failed to bulk import:', error);
+      return null;
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));

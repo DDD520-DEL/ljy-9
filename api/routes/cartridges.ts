@@ -65,4 +65,22 @@ router.get('/:id/prices', (req: Request, res: Response) => {
   res.json(prices);
 });
 
+router.post('/preview-import', (req: Request, res: Response) => {
+  const { rows } = req.body;
+  if (!Array.isArray(rows)) {
+    return res.status(400).json({ error: 'rows must be an array' });
+  }
+  const result = cartridgeService.previewImport(rows);
+  res.json(result);
+});
+
+router.post('/bulk-import', (req: Request, res: Response) => {
+  const { rows } = req.body;
+  if (!Array.isArray(rows)) {
+    return res.status(400).json({ error: 'rows must be an array' });
+  }
+  const result = cartridgeService.bulkImport(rows);
+  res.status(201).json(result);
+});
+
 export default router;

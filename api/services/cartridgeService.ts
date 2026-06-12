@@ -6,6 +6,109 @@ let priceStore = [...priceHistories];
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
+export interface ImportResult {
+  imported: Cartridge[];
+  skipped: { row: number; data: Record<string, any>; reason: string }[];
+  errors: { row: number; data: Record<string, any>; reason: string }[];
+}
+
+const VALID_CONDITIONS = ['MINT', 'NEAR_MINT', 'VERY_GOOD', 'GOOD', 'FAIR', 'POOR'];
+const VALID_REGIONS = ['JPN', 'USA', 'EUR', 'CHN', 'OTHER'];
+
+const parseBoolean = (val: any): boolean => {
+  if (typeof val === 'boolean') return val;
+  const str = String(val).toLowerCase().trim();
+  return ['true', '1', 'yes', 'y', '是', '有'].includes(str);
+};
+
+const normalizeString = (str: string): string => {
+  return str.toLowerCase().trim().replace(/\s+/g, '');
+};
+
+const isDuplicate = (data: Partial<Cartridge>): Cartridge | undefined => {
+  return cartridgeStore.find((c) => {
+    const sameTitle = normalizeString(c.title) === normalizeString(data.title || '');
+    const samePlatform = normalizeString(c.platform) === normalizeString(data.platform || '');
+    const sameRegion = c.region === data.region;
+    return sameTitle && samePlatform && sameRegion;
+  });
+};
+
+const validateRow = (data: Record<string, any>, rowIndex: number): { valid: boolean; errors: string[]; parsed?: Omit<Cartridge, 'id' | 'createdAt' | 'updatedAt'> } => {
+  const errors: string[] = [];
+  const requiredFields = ['title', 'platform'];
+  for (const field of requiredFields) {
+    if (!data[field] || String(data[field]).trim() === '') {
+      errors.push(`缺少必填字段: ${field}`);
+    }
+  }
+  const title = String(data.title || '').trim();
+  const platform = String(data.platform || '').trim();
+  const series = String(data.series || '').trim();
+  const publisher = String(data.publisher || '').trim();
+  let releaseYear = parseInt(data.releaseYear);
+  if (isNaN(releaseYear)) releaseYear = 1990;
+  if (releaseYear < 1970 || releaseYear > 2099) {
+    errors.push(`发行年份必须在 1970-2099 之间`);
+  }
+  let region = (data.region || 'JPN').toString().toUpperCase().trim();
+  if (!VALID_REGIONS.includes(region)) {
+    if (region === 'JP' || region === '日本' || region === '日版') region = 'JPN';
+    else if (region === 'US' || region === '美国' || region === '美版') region = 'USA';
+    else if (region === 'EU' || region === '欧洲' || region === '欧版') region = 'EUR';
+    else if (region === 'CN' || region === '中国' || region === '国行') region = 'CHN';
+    else region = 'OTHER';
+  }
+  let condition = (data.condition || 'VERY_GOOD').toString().toUpperCase().trim().replace(/\s+/g, '_');
+  if (!VALID_CONDITIONS.includes(condition)) {
+    const conditionMap: Record<string, string> = {
+      '全新': 'MINT',
+      '近新': 'NEAR_MINT',
+      '很好': 'VERY_GOOD',
+      '良好': 'GOOD',
+      '一般': 'FAIR',
+      '较差': 'POOR',
+      'NM': 'NEAR_MINT',
+      'VG': 'VERY_GOOD',
+      'G': 'GOOD',
+      'F': 'FAIR',
+      'P': 'POOR',
+    };
+    condition = conditionMap[condition] || 'VERY_GOOD';
+  }
+  const hasBox = parseBoolean(data.hasBox ?? true);
+  const hasManual = parseBoolean(data.hasManual ?? true);
+  const hasCartridge = parseBoolean(data.hasCartridge ?? true);
+  let purchasePrice = parseFloat(data.purchasePrice);
+  if (isNaN(purchasePrice) || purchasePrice < 0) purchasePrice = 0;
+  const purchaseDate = data.purchaseDate || new Date().toISOString().split('T')[0];
+  const notes = String(data.notes || '').trim();
+  const coverImage = String(data.coverImage || '').trim();
+  if (errors.length > 0) {
+    return { valid: false, errors };
+  }
+  return {
+    valid: true,
+    errors: [],
+    parsed: {
+      title,
+      platform,
+      series,
+      publisher,
+      releaseYear,
+      region: region as Cartridge['region'],
+      condition: condition as Cartridge['condition'],
+      hasBox,
+      hasManual,
+      hasCartridge,
+      purchasePrice,
+      purchaseDate,
+      notes,
+      coverImage,
+    },
+  };
+};
+
 export const cartridgeService = {
   getCartridges: (params: {
     platform?: string;
@@ -111,5 +214,77 @@ export const cartridgeService = {
 
   getPublishers: (): string[] => {
     return [...new Set(cartridgeStore.map((c) => c.publisher))].sort();
+  },
+
+  previewImport: (rows: Record<string, any>[]): {
+    valid: { row: number; data: Omit<Cartridge, 'id' | 'createdAt' | 'updatedAt'>; original: Record<string, any> }[];
+    duplicates: { row: number; data: Record<string, any>; reason: string }[];
+    errors: { row: number; data: Record<string, any>; reason: string }[];
+  } => {
+    const valid: { row: number; data: Omit<Cartridge, 'id' | 'createdAt' | 'updatedAt'>; original: Record<string, any> }[] = [];
+    const duplicates: { row: number; data: Record<string, any>; reason: string }[] = [];
+    const errors: { row: number; data: Record<string, any>; reason: string }[] = [];
+    const seenInBatch = new Map<string, number>();
+
+    rows.forEach((row, idx) => {
+      const rowNumber = idx + 2;
+      const validation = validateRow(row, rowNumber);
+      if (!validation.valid) {
+        errors.push({
+          row: rowNumber,
+          data: row,
+          reason: validation.errors.join('; '),
+        });
+        return;
+      }
+      const parsedData = validation.parsed!;
+      const batchKey = `${normalizeString(parsedData.title)}_${normalizeString(parsedData.platform)}_${parsedData.region}`;
+      if (seenInBatch.has(batchKey)) {
+        const firstRow = seenInBatch.get(batchKey)!;
+        duplicates.push({
+          row: rowNumber,
+          data: row,
+          reason: `与导入文件中第 ${firstRow} 行重复 (同名称+同平台+同区域)`,
+        });
+        return;
+      }
+      const existingDup = isDuplicate(parsedData);
+      if (existingDup) {
+        duplicates.push({
+          row: rowNumber,
+          data: row,
+          reason: `与藏品库中已存在的卡带重复: ${existingDup.title} (${existingDup.platform}/${existingDup.region})`,
+        });
+        return;
+      }
+      seenInBatch.set(batchKey, rowNumber);
+      valid.push({
+        row: rowNumber,
+        data: parsedData,
+        original: row,
+      });
+    });
+
+    return { valid, duplicates, errors };
+  },
+
+  bulkImport: function (rows: Record<string, any>[]): ImportResult {
+    const result: ImportResult = {
+      imported: [],
+      skipped: [],
+      errors: [],
+    };
+    const self = cartridgeService;
+    const preview = self.previewImport(rows);
+
+    result.skipped = preview.duplicates;
+    result.errors = preview.errors;
+
+    preview.valid.forEach((item: { row: number; data: Omit<Cartridge, 'id' | 'createdAt' | 'updatedAt'>; original: Record<string, any> }) => {
+      const imported = self.addCartridge(item.data);
+      result.imported.push(imported);
+    });
+
+    return result;
   },
 };

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import Sidebar from '../components/Sidebar';
 import CartridgeCard from '../components/CartridgeCard';
-import { Filter, Grid, List, Plus, Search, SortAsc, FileText, Download, Loader2 } from 'lucide-react';
+import BulkImportModal from '../components/BulkImportModal';
+import { Filter, Grid, List, Plus, Search, SortAsc, FileText, Download, Loader2, UploadCloud } from 'lucide-react';
 import { generateReportData } from '../utils/report';
 import { exportReportPDF } from '../utils/pdfExport';
 
@@ -23,6 +24,7 @@ const Collection = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   const handleExportReport = async () => {
     if (isExporting || cartridges.length === 0) return;
@@ -96,6 +98,14 @@ const Collection = () => {
                     导出报告
                   </>
                 )}
+              </button>
+
+              <button
+                onClick={() => setShowBulkImport(true)}
+                className="pixel-btn pixel-btn-cyan text-xs flex items-center gap-2 whitespace-nowrap"
+              >
+                <UploadCloud className="w-4 h-4" />
+                批量导入
               </button>
 
               <Link
@@ -219,6 +229,7 @@ const Collection = () => {
           )}
         </div>
       </div>
+      <BulkImportModal isOpen={showBulkImport} onClose={() => setShowBulkImport(false)} />
     </div>
   );
 };

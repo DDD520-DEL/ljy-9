@@ -16,8 +16,18 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import type { Cartridge } from '../types';
 import { formatPrice } from '../utils/format';
+import {
+  getAvailableYears,
+  getYearCartridges,
+  getMonthlyTrend,
+  getCumulativeTrend,
+  getTopExpensive,
+  getPlatformDistribution,
+  getYearStats,
+  navigateYear,
+  canNavigateYear,
+} from '../utils/yearlyReview';
 import {
   Calendar,
   Trophy,
@@ -48,127 +58,60 @@ const PLATFORM_COLORS = [
   '#0ea5e9',
 ];
 
-const MONTH_LABELS = [
-  '1月', '2月', '3月', '4月', '5月', '6月',
-  '7月', '8月', '9月', '10月', '11月', '12月',
-];
-
 const YearlyReview = () => {
   const { cartridges, fetchCartridges } = useStore();
-  const currentYear = new Date().getFullYear();
 
   const availableYears = useMemo(() => {
-    const years = new Set<number>();
-    cartridges.forEach((c) => {
-      if (c.purchaseDate) {
-        years.add(new Date(c.purchaseDate).getFullYear());
-      }
-      if (c.createdAt) {
-        years.add(new Date(c.createdAt).getFullYear());
-      }
-    });
-    years.add(currentYear);
-    return Array.from(years).sort((a, b) => b - a);
-  }, [cartridges, currentYear]);
+    const purchaseDates = cartridges.map((c) => c.purchaseDate);
+    const createdAtDates = cartridges.map((c) => c.createdAt);
+    return getAvailableYears(purchaseDates, createdAtDates, true);
+  }, [cartridges]);
 
   const [selectedYear, setSelectedYear] = useState<number>(
-    availableYears.length > 0 ? availableYears[0] : currentYear
+    availableYears.length > 0 ? availableYears[0] : new Date().getFullYear()
   );
 
   useEffect(() => {
     fetchCartridges();
   }, []);
 
-  const getYearDate = (cartridge: Cartridge): Date | null => {
-    if (cartridge.purchaseDate) {
-      const d = new Date(cartridge.purchaseDate);
-      if (!isNaN(d.getTime())) return d;
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
     }
-    if (cartridge.createdAt) {
-      const d = new Date(cartridge.createdAt);
-      if (!isNaN(d.getTime())) return d;
-    }
-    return null;
-  };
+  }, [availableYears, selectedYear]);
 
   const yearCartridges = useMemo(() => {
-    return cartridges.filter((c) => {
-      const d = getYearDate(c);
-      return d && d.getFullYear() === selectedYear;
-    });
+    return getYearCartridges(cartridges, selectedYear);
   }, [cartridges, selectedYear]);
 
   const monthlyTrend = useMemo(() => {
-    const data = MONTH_LABELS.map((label, index) => ({
-      month: label,
-      新增数量: 0,
-      累计支出: 0,
-    }));
-
-    yearCartridges.forEach((c) => {
-      const d = getYearDate(c);
-      if (d) {
-        const monthIndex = d.getMonth();
-        data[monthIndex].新增数量 += 1;
-        data[monthIndex].累计支出 += c.purchasePrice || 0;
-      }
-    });
-
-    return data;
-  }, [yearCartridges]);
+    return getMonthlyTrend(yearCartridges, selectedYear);
+  }, [yearCartridges, selectedYear]);
 
   const cumulativeTrend = useMemo(() => {
-    let cumulative = 0;
-    return monthlyTrend.map((item) => {
-      cumulative += item.新增数量;
-      return {
-        month: item.month,
-        累计数量: cumulative,
-      };
-    });
+    return getCumulativeTrend(monthlyTrend);
   }, [monthlyTrend]);
 
   const top5Expensive = useMemo(() => {
-    return [...yearCartridges]
-      .sort((a, b) => (b.purchasePrice || 0) - (a.purchasePrice || 0))
-      .slice(0, 5);
+    return getTopExpensive(yearCartridges, 5);
   }, [yearCartridges]);
 
   const platformDistribution = useMemo(() => {
-    const map = new Map<string, number>();
-    yearCartridges.forEach((c) => {
-      map.set(c.platform, (map.get(c.platform) || 0) + 1);
-    });
-    return Array.from(map.entries())
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
+    return getPlatformDistribution(yearCartridges);
   }, [yearCartridges]);
 
   const yearStats = useMemo(() => {
-    const totalCount = yearCartridges.length;
-    const totalSpent = yearCartridges.reduce(
-      (sum, c) => sum + (c.purchasePrice || 0),
-      0
-    );
-    const avgPrice = totalCount > 0 ? totalSpent / totalCount : 0;
-    const uniquePlatforms = new Set(yearCartridges.map((c) => c.platform)).size;
-    const uniqueSeries = new Set(yearCartridges.map((c) => c.series)).size;
-
-    return {
-      totalCount,
-      totalSpent,
-      avgPrice,
-      uniquePlatforms,
-      uniqueSeries,
-    };
+    return getYearStats(yearCartridges);
   }, [yearCartridges]);
 
-  const navigateYear = (direction: -1 | 1) => {
-    const currentIndex = availableYears.indexOf(selectedYear);
-    if (currentIndex === -1) return;
-    const newIndex = currentIndex - direction;
-    if (newIndex >= 0 && newIndex < availableYears.length) {
-      setSelectedYear(availableYears[newIndex]);
+  const canGoPrev = canNavigateYear(availableYears, selectedYear, -1);
+  const canGoNext = canNavigateYear(availableYears, selectedYear, 1);
+
+  const handleNavigateYear = (direction: -1 | 1) => {
+    const newYear = navigateYear(availableYears, selectedYear, direction);
+    if (newYear !== null) {
+      setSelectedYear(newYear);
     }
   };
 
@@ -233,6 +176,15 @@ const YearlyReview = () => {
     return null;
   };
 
+  const getNavButtonClass = (enabled: boolean) => {
+    const base =
+      'w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-all duration-200';
+    if (enabled) {
+      return `${base} bg-card-bg border-card-border text-gray-400 hover:text-white hover:border-neon-purple hover:bg-neon-purple/10 cursor-pointer`;
+    }
+    return `${base} bg-darker-navy border-card-border/50 text-gray-700 cursor-not-allowed opacity-50 grayscale`;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="mb-8">
@@ -257,9 +209,12 @@ const YearlyReview = () => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigateYear(1)}
-              disabled={availableYears.indexOf(selectedYear) >= availableYears.length - 1}
-              className="w-10 h-10 rounded-lg bg-card-bg border-2 border-card-border flex items-center justify-center text-gray-400 hover:text-white hover:border-neon-purple transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              onClick={() => handleNavigateYear(1)}
+              disabled={!canGoNext}
+              aria-disabled={!canGoNext}
+              aria-label="下一年"
+              title={canGoNext ? '前往下一年' : '已经是最新年份'}
+              className={getNavButtonClass(canGoNext)}
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -272,9 +227,12 @@ const YearlyReview = () => {
             </div>
 
             <button
-              onClick={() => navigateYear(-1)}
-              disabled={availableYears.indexOf(selectedYear) <= 0}
-              className="w-10 h-10 rounded-lg bg-card-bg border-2 border-card-border flex items-center justify-center text-gray-400 hover:text-white hover:border-neon-purple transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              onClick={() => handleNavigateYear(-1)}
+              disabled={!canGoPrev}
+              aria-disabled={!canGoPrev}
+              aria-label="上一年"
+              title={canGoPrev ? '前往上一年' : '已经是最早年份'}
+              className={getNavButtonClass(canGoPrev)}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -513,7 +471,7 @@ const YearlyReview = () => {
 
           {top5Expensive.length > 0 ? (
             <div className="space-y-3">
-              {top5Expensive.map((cartridge, index) => (
+              {top5Expensive.map((cartridge: any, index: number) => (
                 <Link
                   key={cartridge.id}
                   to={`/collection/${cartridge.id}`}
@@ -639,10 +597,7 @@ const YearlyReview = () => {
           </div>
           <div className="flex flex-wrap gap-3">
             {availableYears.map((year) => {
-              const yearCount = cartridges.filter((c) => {
-                const d = getYearDate(c);
-                return d && d.getFullYear() === year;
-              }).length;
+              const yearCount = getYearCartridges(cartridges, year).length;
               const isActive = year === selectedYear;
               return (
                 <button
@@ -651,7 +606,7 @@ const YearlyReview = () => {
                   className={`px-5 py-3 rounded-lg font-pixel text-sm transition-all border-2 ${
                     isActive
                       ? 'bg-neon-purple/20 border-neon-purple text-neon-purple shadow-neon-purple'
-                      : 'bg-card-bg border-card-border text-gray-400 hover:text-white hover:border-neon-purple/50'
+                      : 'bg-card-bg border-card-border text-gray-400 hover:text-white hover:border-neon-purple/50 hover:bg-neon-purple/5'
                   }`}
                 >
                   <span>{year}</span>

@@ -97,6 +97,50 @@ export interface ExchangeNotification {
   createdAt: string;
 }
 
+export interface Review {
+  id: string;
+  exchangeId: string;
+  fromUserId: string;
+  fromUserName: string;
+  toUserId: string;
+  toUserName: string;
+  rating: number;
+  comment: string;
+  cartridgeTitle: string;
+  createdAt: string;
+}
+
+export interface UserRating {
+  userId: string;
+  userName: string;
+  averageRating: number;
+  totalReviews: number;
+  ratingDistribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}
+
+export interface Exchange {
+  id: string;
+  requestId: string;
+  matchRequestId: string;
+  initiatorUserId: string;
+  initiatorUserName: string;
+  targetUserId: string;
+  targetUserName: string;
+  cartridgeTitle: string;
+  platform: string;
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  initiatorReviewed: boolean;
+  targetReviewed: boolean;
+  createdAt: string;
+  completedAt?: string;
+}
+
 export interface Filters {
   platform: string[];
   series: string[];

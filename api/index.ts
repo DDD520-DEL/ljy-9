@@ -5,6 +5,7 @@ import achievementRoutes from './routes/achievements';
 import exchangeRoutes from './routes/exchange';
 import statsRoutes from './routes/stats';
 import notificationRoutes from './routes/notifications';
+import reviewRoutes from './routes/reviews';
 import { notificationService } from './services/notificationService';
 
 const app = express();
@@ -20,6 +21,7 @@ app.use('/api/achievements', achievementRoutes);
 app.use('/api/exchange', exchangeRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

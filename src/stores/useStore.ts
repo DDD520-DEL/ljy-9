@@ -8,6 +8,9 @@ import type {
   Filters,
   PriceHistory,
   ExchangeNotification,
+  Review,
+  UserRating,
+  Exchange,
 } from '../types';
 
 interface AppState {
@@ -27,6 +30,10 @@ interface AppState {
   publishers: string[];
   isLoading: boolean;
   currentView: 'grid' | 'list';
+  reviews: Review[];
+  userRatings: UserRating[];
+  exchanges: Exchange[];
+  pendingReviews: Exchange[];
 
   fetchCartridges: () => Promise<void>;
   fetchCartridge: (id: string) => Promise<void>;
@@ -59,6 +66,30 @@ interface AppState {
     skipped: { row: number; data: Record<string, any>; reason: string }[];
     errors: { row: number; data: Record<string, any>; reason: string }[];
   } | null>;
+
+  fetchReviews: (userId: string) => Promise<void>;
+  fetchUserRating: (userId: string) => Promise<UserRating | null>;
+  fetchAllUserRatings: () => Promise<void>;
+  addReview: (data: {
+    exchangeId: string;
+    toUserId: string;
+    toUserName: string;
+    rating: number;
+    comment: string;
+    cartridgeTitle: string;
+  }) => Promise<Review | null>;
+  fetchExchanges: () => Promise<void>;
+  createExchange: (data: {
+    requestId: string;
+    matchRequestId: string;
+    targetUserId: string;
+    targetUserName: string;
+    cartridgeTitle: string;
+    platform: string;
+  }) => Promise<Exchange | null>;
+  completeExchange: (exchangeId: string) => Promise<Exchange | null>;
+  cancelExchange: (exchangeId: string) => Promise<Exchange | null>;
+  fetchPendingReviews: () => Promise<void>;
 }
 
 const API_BASE = '/api';
@@ -86,6 +117,10 @@ export const useStore = create<AppState>((set, get) => ({
   publishers: [],
   isLoading: false,
   currentView: 'grid',
+  reviews: [],
+  userRatings: [],
+  exchanges: [],
+  pendingReviews: [],
 
   fetchCartridges: async () => {
     set({ isLoading: true });
@@ -388,6 +423,150 @@ export const useStore = create<AppState>((set, get) => ({
       return null;
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  fetchReviews: async (userId) => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/user/${userId}`);
+      const data = await res.json();
+      set({ reviews: data });
+    } catch (error) {
+      console.error('Failed to fetch reviews:', error);
+    }
+  },
+
+  fetchUserRating: async (userId) => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/user/${userId}/rating`);
+      const data = await res.json();
+      set((state) => ({
+        userRatings: state.userRatings.map((r) =>
+          r.userId === userId ? data : r
+        ),
+      }));
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch user rating:', error);
+      return null;
+    }
+  },
+
+  fetchAllUserRatings: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/ratings`);
+      const data = await res.json();
+      set({ userRatings: data });
+    } catch (error) {
+      console.error('Failed to fetch all user ratings:', error);
+    }
+  },
+
+  addReview: async (data) => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error);
+      }
+      const newReview = await res.json();
+      set((state) => ({
+        reviews: [newReview, ...state.reviews],
+      }));
+      get().fetchUserRating(data.toUserId);
+      get().fetchPendingReviews();
+      get().fetchExchanges();
+      return newReview;
+    } catch (error: any) {
+      console.error('Failed to add review:', error);
+      throw error;
+    }
+  },
+
+  fetchExchanges: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/exchanges`);
+      const data = await res.json();
+      set({ exchanges: data });
+    } catch (error) {
+      console.error('Failed to fetch exchanges:', error);
+    }
+  },
+
+  createExchange: async (data) => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/exchanges`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const newExchange = await res.json();
+      set((state) => ({
+        exchanges: [newExchange, ...state.exchanges],
+      }));
+      return newExchange;
+    } catch (error) {
+      console.error('Failed to create exchange:', error);
+      return null;
+    }
+  },
+
+  completeExchange: async (exchangeId) => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/exchanges/${exchangeId}/complete`, {
+        method: 'PUT',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error);
+      }
+      const updated = await res.json();
+      set((state) => ({
+        exchanges: state.exchanges.map((e) =>
+          e.id === exchangeId ? updated : e
+        ),
+      }));
+      get().fetchPendingReviews();
+      return updated;
+    } catch (error: any) {
+      console.error('Failed to complete exchange:', error);
+      throw error;
+    }
+  },
+
+  cancelExchange: async (exchangeId) => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/exchanges/${exchangeId}/cancel`, {
+        method: 'PUT',
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error);
+      }
+      const updated = await res.json();
+      set((state) => ({
+        exchanges: state.exchanges.map((e) =>
+          e.id === exchangeId ? updated : e
+        ),
+      }));
+      return updated;
+    } catch (error: any) {
+      console.error('Failed to cancel exchange:', error);
+      throw error;
+    }
+  },
+
+  fetchPendingReviews: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/reviews/pending-reviews`);
+      const data = await res.json();
+      set({ pendingReviews: data });
+    } catch (error) {
+      console.error('Failed to fetch pending reviews:', error);
     }
   },
 }));

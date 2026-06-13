@@ -6,6 +6,7 @@ import exchangeRoutes from './routes/exchange';
 import statsRoutes from './routes/stats';
 import notificationRoutes from './routes/notifications';
 import reviewRoutes from './routes/reviews';
+import priceAlertRoutes from './routes/priceAlerts';
 import { notificationService } from './services/notificationService';
 import { authMiddleware } from './middleware/auth';
 
@@ -24,6 +25,7 @@ app.use('/api/exchange', exchangeRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/price-alerts', priceAlertRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

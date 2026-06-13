@@ -140,3 +140,22 @@ export interface Stats {
     unlocked: number;
   };
 }
+
+export interface PriceAlert {
+  id: string;
+  cartridgeId: string;
+  cartridgeTitle: string;
+  cartridgePlatform: string;
+  coverImage: string;
+  threshold: number;
+  currentPrice: number;
+  priceChangePercent: number;
+  direction: 'UP' | 'DOWN';
+  days: number;
+  createdAt: string;
+}
+
+export interface PriceAlertSettings {
+  threshold: number;
+  enabled: boolean;
+}

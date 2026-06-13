@@ -12,6 +12,8 @@ import type {
   UserRating,
   Exchange,
   User,
+  PriceAlert,
+  PriceAlertSettings,
 } from '../types';
 
 interface AppState {
@@ -37,6 +39,8 @@ interface AppState {
   pendingReviews: Exchange[];
   currentUser: User;
   availableUsers: User[];
+  priceAlerts: PriceAlert[];
+  priceAlertSettings: PriceAlertSettings | null;
 
   fetchCartridges: () => Promise<void>;
   fetchCartridge: (id: string) => Promise<void>;
@@ -94,6 +98,10 @@ interface AppState {
   cancelExchange: (exchangeId: string) => Promise<Exchange | null>;
   fetchPendingReviews: () => Promise<void>;
 
+  fetchPriceAlerts: () => Promise<void>;
+  fetchPriceAlertSettings: () => Promise<void>;
+  updatePriceAlertSettings: (settings: Partial<PriceAlertSettings>) => Promise<void>;
+
   switchUser: (user: User) => void;
   getAuthHeaders: () => HeadersInit;
 }
@@ -137,6 +145,8 @@ export const useStore = create<AppState>((set, get) => ({
     { id: 'user6', name: '怀旧游戏屋' },
     { id: 'user7', name: 'SFC老玩家' },
   ],
+  priceAlerts: [],
+  priceAlertSettings: null,
 
   getAuthHeaders: () => {
     const { currentUser } = get();
@@ -637,6 +647,45 @@ export const useStore = create<AppState>((set, get) => ({
       set({ pendingReviews: data });
     } catch (error) {
       console.error('Failed to fetch pending reviews:', error);
+    }
+  },
+
+  fetchPriceAlerts: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/price-alerts`, {
+        headers: get().getAuthHeaders(),
+      });
+      const data = await res.json();
+      set({ priceAlerts: data });
+    } catch (error) {
+      console.error('Failed to fetch price alerts:', error);
+    }
+  },
+
+  fetchPriceAlertSettings: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/price-alerts/settings`, {
+        headers: get().getAuthHeaders(),
+      });
+      const data = await res.json();
+      set({ priceAlertSettings: data });
+    } catch (error) {
+      console.error('Failed to fetch price alert settings:', error);
+    }
+  },
+
+  updatePriceAlertSettings: async (settings: Partial<PriceAlertSettings>) => {
+    try {
+      const res = await fetch(`${API_BASE}/price-alerts/settings`, {
+        method: 'PUT',
+        headers: get().getAuthHeaders(),
+        body: JSON.stringify(settings),
+      });
+      const data = await res.json();
+      set({ priceAlertSettings: data });
+      get().fetchPriceAlerts();
+    } catch (error) {
+      console.error('Failed to update price alert settings:', error);
     }
   },
 }));

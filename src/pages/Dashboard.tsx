@@ -5,6 +5,7 @@ import StatsCard from '../components/StatsCard';
 import CartridgeCard from '../components/CartridgeCard';
 import AchievementBadge from '../components/AchievementBadge';
 import PriceChart from '../components/PriceChart';
+import PriceAlertBanner from '../components/PriceAlertBanner';
 import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2 } from 'lucide-react';
 import { generateReportData } from '../utils/report';
 import { exportReportPDF } from '../utils/pdfExport';
@@ -60,6 +61,8 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
+      <PriceAlertBanner />
+
       <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-pixel text-2xl text-white mb-2 neon-glow-purple">

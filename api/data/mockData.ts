@@ -233,24 +233,51 @@ export const cartridges: Cartridge[] = [
   },
 ];
 
+const generatePriceHistory = (cartridge: typeof cartridges[0]) => {
+  const basePrice = cartridge.purchasePrice;
+  const sources = ['雅虎拍卖', 'Mercari', 'eBay', '闲鱼'];
+  const volatileCartridgeIds = ['2', '9', '5'];
+
+  return Array.from({ length: 12 }, (_, i) => {
+    const monthAgo = 11 - i;
+    const date = new Date();
+    date.setMonth(date.getMonth() - monthAgo);
+
+    let priceMultiplier = 0.8 + Math.random() * 0.6 + (11 - monthAgo) * 0.02;
+
+    if (volatileCartridgeIds.includes(cartridge.id)) {
+      if (monthAgo === 0) {
+        if (cartridge.id === '2') {
+          priceMultiplier = 1.8;
+        } else if (cartridge.id === '9') {
+          priceMultiplier = 0.65;
+        } else if (cartridge.id === '5') {
+          priceMultiplier = 1.45;
+        }
+      } else if (monthAgo === 1) {
+        if (cartridge.id === '2') {
+          priceMultiplier = 1.1;
+        } else if (cartridge.id === '9') {
+          priceMultiplier = 1.05;
+        } else if (cartridge.id === '5') {
+          priceMultiplier = 1.0;
+        }
+      }
+    }
+
+    return sources.map((source, idx) => ({
+      id: `${cartridge.id}-${i}-${idx}`,
+      cartridgeId: cartridge.id,
+      platform: source,
+      price: Math.round(basePrice * priceMultiplier + (Math.random() - 0.5) * basePrice * 0.05),
+      date: date.toISOString().split('T')[0],
+      source,
+    }));
+  }).flat();
+};
+
 export const priceHistories: PriceHistory[] = [
-  ...cartridges.flatMap((cartridge) => {
-    const basePrice = cartridge.purchasePrice;
-    const sources = ['雅虎拍卖', 'Mercari', 'eBay', '闲鱼'];
-    return Array.from({ length: 12 }, (_, i) => {
-      const monthAgo = 11 - i;
-      const date = new Date();
-      date.setMonth(date.getMonth() - monthAgo);
-      return sources.map((source, idx) => ({
-        id: `${cartridge.id}-${i}-${idx}`,
-        cartridgeId: cartridge.id,
-        platform: source,
-        price: Math.round(basePrice * (0.8 + Math.random() * 0.6 + (11 - monthAgo) * 0.02)),
-        date: date.toISOString().split('T')[0],
-        source,
-      }));
-    }).flat();
-  }),
+  ...cartridges.flatMap((cartridge) => generatePriceHistory(cartridge)),
 ];
 
 export const achievements: Achievement[] = [

@@ -11,6 +11,7 @@ import type {
   Review,
   UserRating,
   Exchange,
+  User,
 } from '../types';
 
 interface AppState {
@@ -34,6 +35,8 @@ interface AppState {
   userRatings: UserRating[];
   exchanges: Exchange[];
   pendingReviews: Exchange[];
+  currentUser: User;
+  availableUsers: User[];
 
   fetchCartridges: () => Promise<void>;
   fetchCartridge: (id: string) => Promise<void>;
@@ -90,6 +93,9 @@ interface AppState {
   completeExchange: (exchangeId: string) => Promise<Exchange | null>;
   cancelExchange: (exchangeId: string) => Promise<Exchange | null>;
   fetchPendingReviews: () => Promise<void>;
+
+  switchUser: (user: User) => void;
+  getAuthHeaders: () => HeadersInit;
 }
 
 const API_BASE = '/api';
@@ -121,6 +127,38 @@ export const useStore = create<AppState>((set, get) => ({
   userRatings: [],
   exchanges: [],
   pendingReviews: [],
+  currentUser: { id: 'user1', name: '像素收藏家' },
+  availableUsers: [
+    { id: 'user1', name: '像素收藏家' },
+    { id: 'user2', name: '复古玩家小王' },
+    { id: 'user3', name: 'SFC收藏家' },
+    { id: 'user4', name: 'GB爱好者' },
+    { id: 'user5', name: '卡带猎人' },
+    { id: 'user6', name: '怀旧游戏屋' },
+    { id: 'user7', name: 'SFC老玩家' },
+  ],
+
+  getAuthHeaders: () => {
+    const { currentUser } = get();
+    return {
+      'Content-Type': 'application/json',
+      'x-user-id': currentUser.id,
+      'x-user-name': encodeURIComponent(currentUser.name),
+    };
+  },
+
+  switchUser: (user) => {
+    set({ currentUser: user });
+    get().fetchCartridges();
+    get().fetchStats();
+    get().fetchExchangeRequests();
+    get().fetchMatches();
+    get().fetchNotifications();
+    get().fetchUnreadCount();
+    get().fetchAllUserRatings();
+    get().fetchExchanges();
+    get().fetchPendingReviews();
+  },
 
   fetchCartridges: async () => {
     set({ isLoading: true });
@@ -134,7 +172,9 @@ export const useStore = create<AppState>((set, get) => ({
       if (filters.publisher.length === 1) params.set('publisher', filters.publisher[0]);
       if (filters.condition.length === 1) params.set('condition', filters.condition[0]);
 
-      const res = await fetch(`${API_BASE}/cartridges?${params}`);
+      const res = await fetch(`${API_BASE}/cartridges?${params}`, {
+        headers: get().getAuthHeaders(),
+      });
       const result = await res.json();
       let data = result.data || [];
 
@@ -161,7 +201,9 @@ export const useStore = create<AppState>((set, get) => ({
   fetchCartridge: async (id: string) => {
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_BASE}/cartridges/${id}`);
+      const res = await fetch(`${API_BASE}/cartridges/${id}`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ selectedCartridge: data, isLoading: false });
     } catch (error) {
@@ -175,7 +217,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/cartridges`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: get().getAuthHeaders(),
         body: JSON.stringify(data),
       });
       const newCartridge = await res.json();
@@ -196,7 +238,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/cartridges/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: get().getAuthHeaders(),
         body: JSON.stringify(data),
       });
       const updated = await res.json();
@@ -239,7 +281,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchPriceHistory: async (cartridgeId) => {
     try {
-      const res = await fetch(`${API_BASE}/cartridges/${cartridgeId}/prices`);
+      const res = await fetch(`${API_BASE}/cartridges/${cartridgeId}/prices`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ priceHistory: data });
     } catch (error) {
@@ -263,7 +307,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchAchievements: async () => {
     try {
-      const res = await fetch(`${API_BASE}/achievements`);
+      const res = await fetch(`${API_BASE}/achievements`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ achievements: data });
     } catch (error) {
@@ -273,7 +319,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchStats: async () => {
     try {
-      const res = await fetch(`${API_BASE}/stats`);
+      const res = await fetch(`${API_BASE}/stats`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ stats: data });
     } catch (error) {
@@ -283,7 +331,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchExchangeRequests: async () => {
     try {
-      const res = await fetch(`${API_BASE}/exchange`);
+      const res = await fetch(`${API_BASE}/exchange`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ exchangeRequests: data });
     } catch (error) {
@@ -295,7 +345,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/exchange`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: get().getAuthHeaders(),
         body: JSON.stringify(data),
       });
       const newRequest = await res.json();
@@ -310,7 +360,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchMatches: async () => {
     try {
-      const res = await fetch(`${API_BASE}/exchange/matches`);
+      const res = await fetch(`${API_BASE}/exchange/matches`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ matches: data });
     } catch (error) {
@@ -338,7 +390,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchNotifications: async () => {
     try {
-      const res = await fetch(`${API_BASE}/notifications`);
+      const res = await fetch(`${API_BASE}/notifications`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ notifications: data });
     } catch (error) {
@@ -348,7 +402,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      const res = await fetch(`${API_BASE}/notifications/unread-count`);
+      const res = await fetch(`${API_BASE}/notifications/unread-count`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ unreadCount: data.count });
     } catch (error) {
@@ -360,6 +416,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       await fetch(`${API_BASE}/notifications/${id}/read`, {
         method: 'PUT',
+        headers: get().getAuthHeaders(),
       });
       set((state) => ({
         notifications: state.notifications.map((n) =>
@@ -376,6 +433,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       await fetch(`${API_BASE}/notifications/read-all`, {
         method: 'PUT',
+        headers: get().getAuthHeaders(),
       });
       set((state) => ({
         notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
@@ -390,7 +448,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/cartridges/preview-import`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: get().getAuthHeaders(),
         body: JSON.stringify({ rows }),
       });
       const data = await res.json();
@@ -406,7 +464,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/cartridges/bulk-import`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: get().getAuthHeaders(),
         body: JSON.stringify({ rows }),
       });
       const data = await res.json();
@@ -428,7 +486,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchReviews: async (userId) => {
     try {
-      const res = await fetch(`${API_BASE}/reviews/user/${userId}`);
+      const res = await fetch(`${API_BASE}/reviews/user/${userId}`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ reviews: data });
     } catch (error) {
@@ -438,7 +498,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchUserRating: async (userId) => {
     try {
-      const res = await fetch(`${API_BASE}/reviews/user/${userId}/rating`);
+      const res = await fetch(`${API_BASE}/reviews/user/${userId}/rating`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set((state) => ({
         userRatings: state.userRatings.map((r) =>
@@ -454,7 +516,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchAllUserRatings: async () => {
     try {
-      const res = await fetch(`${API_BASE}/reviews/ratings`);
+      const res = await fetch(`${API_BASE}/reviews/ratings`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ userRatings: data });
     } catch (error) {
@@ -466,7 +530,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/reviews`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: get().getAuthHeaders(),
         body: JSON.stringify(data),
       });
       if (!res.ok) {
@@ -489,7 +553,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchExchanges: async () => {
     try {
-      const res = await fetch(`${API_BASE}/reviews/exchanges`);
+      const res = await fetch(`${API_BASE}/reviews/exchanges`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ exchanges: data });
     } catch (error) {
@@ -501,7 +567,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/reviews/exchanges`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: get().getAuthHeaders(),
         body: JSON.stringify(data),
       });
       const newExchange = await res.json();
@@ -519,6 +585,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/reviews/exchanges/${exchangeId}/complete`, {
         method: 'PUT',
+        headers: get().getAuthHeaders(),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -542,6 +609,7 @@ export const useStore = create<AppState>((set, get) => ({
     try {
       const res = await fetch(`${API_BASE}/reviews/exchanges/${exchangeId}/cancel`, {
         method: 'PUT',
+        headers: get().getAuthHeaders(),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -562,7 +630,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchPendingReviews: async () => {
     try {
-      const res = await fetch(`${API_BASE}/reviews/pending-reviews`);
+      const res = await fetch(`${API_BASE}/reviews/pending-reviews`, {
+        headers: get().getAuthHeaders(),
+      });
       const data = await res.json();
       set({ pendingReviews: data });
     } catch (error) {

@@ -1,27 +1,38 @@
 import { Router, Request, Response } from 'express';
 import { notificationService } from '../services/notificationService';
-import { currentUserId } from '../data/mockData';
 
 const router = Router();
 
-router.get('/', (_req: Request, res: Response) => {
-  const notifications = notificationService.getNotifications(currentUserId);
+router.get('/', (req: Request, res: Response) => {
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const notifications = notificationService.getNotifications(req.currentUser.id);
   res.json(notifications);
 });
 
-router.get('/unread-count', (_req: Request, res: Response) => {
-  const count = notificationService.getUnreadCount(currentUserId);
+router.get('/unread-count', (req: Request, res: Response) => {
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const count = notificationService.getUnreadCount(req.currentUser.id);
   res.json({ count });
 });
 
 router.put('/:id/read', (req: Request, res: Response) => {
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
   const { id } = req.params;
-  const success = notificationService.markAsRead(id, currentUserId);
+  const success = notificationService.markAsRead(id, req.currentUser.id);
   res.json({ success });
 });
 
-router.put('/read-all', (_req: Request, res: Response) => {
-  const count = notificationService.markAllAsRead(currentUserId);
+router.put('/read-all', (req: Request, res: Response) => {
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const count = notificationService.markAllAsRead(req.currentUser.id);
   res.json({ count });
 });
 

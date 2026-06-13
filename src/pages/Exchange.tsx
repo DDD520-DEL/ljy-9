@@ -23,10 +23,9 @@ import {
 import { formatDate, getConditionLabel } from '../utils/format';
 import type { Exchange, Review as ReviewType } from '../types';
 
-const currentUserId = 'user1';
-
 const Exchange = () => {
   const {
+    currentUser,
     exchangeRequests,
     matches,
     userRatings,
@@ -122,7 +121,7 @@ const Exchange = () => {
 
     setIsSubmittingReview(true);
     try {
-      const isInitiator = selectedExchange.initiatorUserId === currentUserId;
+      const isInitiator = selectedExchange.initiatorUserId === currentUser.id;
       const targetUserId = isInitiator ? selectedExchange.targetUserId : selectedExchange.initiatorUserId;
       const targetUserName = isInitiator ? selectedExchange.targetUserName : selectedExchange.initiatorUserName;
 
@@ -228,7 +227,7 @@ const Exchange = () => {
           </div>
           <div className="flex flex-wrap gap-3">
             {pendingReviews.map((exchange) => {
-              const otherUser = exchange.initiatorUserId === currentUserId
+              const otherUser = exchange.initiatorUserId === currentUser.id
                 ? exchange.targetUserName
                 : exchange.initiatorUserName;
               return (
@@ -334,17 +333,17 @@ const Exchange = () => {
         <div className="space-y-4">
           {exchanges.length > 0 ? (
             exchanges.map((exchange) => {
-              const otherUserId = exchange.initiatorUserId === currentUserId
+              const otherUserId = exchange.initiatorUserId === currentUser.id
                 ? exchange.targetUserId
                 : exchange.initiatorUserId;
-              const otherUserName = exchange.initiatorUserId === currentUserId
+              const otherUserName = exchange.initiatorUserId === currentUser.id
                 ? exchange.targetUserName
                 : exchange.initiatorUserName;
               const rating = getUserRating(otherUserId);
               const needsReview =
                 exchange.status === 'COMPLETED' &&
-                ((exchange.initiatorUserId === currentUserId && !exchange.initiatorReviewed) ||
-                  (exchange.targetUserId === currentUserId && !exchange.targetReviewed));
+                ((exchange.initiatorUserId === currentUser.id && !exchange.initiatorReviewed) ||
+                  (exchange.targetUserId === currentUser.id && !exchange.targetReviewed));
 
               return (
                 <div
@@ -672,7 +671,7 @@ const Exchange = () => {
       {showReviewModal && selectedExchange && (
         <ReviewModal
           exchange={selectedExchange}
-          currentUserId={currentUserId}
+          currentUserId={currentUser.id}
           onClose={() => {
             setShowReviewModal(false);
             setSelectedExchange(null);

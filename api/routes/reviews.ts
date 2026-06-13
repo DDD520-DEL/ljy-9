@@ -29,21 +29,34 @@ router.get('/exchange/:exchangeId', (req: Request, res: Response) => {
 
 router.post('/', (req: Request, res: Response) => {
   try {
-    const newReview = reviewService.addReview(req.body);
+    if (!req.currentUser) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const newReview = reviewService.addReview(req.body, req.currentUser);
     res.status(201).json(newReview);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
 });
 
-router.get('/exchanges', (_req: Request, res: Response) => {
-  const exchanges = reviewService.getMyExchanges();
+router.get('/exchanges', (req: Request, res: Response) => {
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const exchanges = reviewService.getMyExchanges(req.currentUser.id);
   res.json(exchanges);
 });
 
 router.post('/exchanges', (req: Request, res: Response) => {
-  const newExchange = reviewService.createExchange(req.body);
-  res.status(201).json(newExchange);
+  try {
+    if (!req.currentUser) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const newExchange = reviewService.createExchange(req.body, req.currentUser);
+    res.status(201).json(newExchange);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 router.put('/exchanges/:id/complete', (req: Request, res: Response) => {
@@ -66,8 +79,11 @@ router.put('/exchanges/:id/cancel', (req: Request, res: Response) => {
   }
 });
 
-router.get('/pending-reviews', (_req: Request, res: Response) => {
-  const pending = reviewService.getPendingReviews();
+router.get('/pending-reviews', (req: Request, res: Response) => {
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const pending = reviewService.getPendingReviews(req.currentUser.id);
   res.json(pending);
 });
 

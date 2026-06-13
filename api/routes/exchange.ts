@@ -13,12 +13,18 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 router.post('/', (req: Request, res: Response) => {
-  const newRequest = exchangeService.addExchangeRequest(req.body);
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const newRequest = exchangeService.addExchangeRequest(req.body, req.currentUser);
   res.status(201).json(newRequest);
 });
 
-router.get('/matches', (_req: Request, res: Response) => {
-  const matches = exchangeService.getMatches();
+router.get('/matches', (req: Request, res: Response) => {
+  if (!req.currentUser) {
+    return res.status(401).json({ error: 'User not authenticated' });
+  }
+  const matches = exchangeService.getMatches(req.currentUser.id);
   res.json(matches);
 });
 

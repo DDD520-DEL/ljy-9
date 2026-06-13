@@ -7,12 +7,14 @@ import statsRoutes from './routes/stats';
 import notificationRoutes from './routes/notifications';
 import reviewRoutes from './routes/reviews';
 import { notificationService } from './services/notificationService';
+import { authMiddleware } from './middleware/auth';
 
 const app = express();
 const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
+app.use(authMiddleware);
 
 notificationService.seedInitialNotifications();
 

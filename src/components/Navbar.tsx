@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { formatRelativeTime } from '../utils/format';
+import UserSwitcher from './UserSwitcher';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -238,9 +239,7 @@ const Navbar = () => {
             )}
           </div>
 
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-neon-pink to-neon-purple flex items-center justify-center font-pixel text-xs text-white">
-            PX
-          </div>
+          <UserSwitcher />
         </div>
       </div>
     </nav>

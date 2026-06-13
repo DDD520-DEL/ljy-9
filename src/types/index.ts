@@ -110,6 +110,12 @@ export interface Review {
   createdAt: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
 export interface UserRating {
   userId: string;
   userName: string;

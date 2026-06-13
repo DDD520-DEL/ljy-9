@@ -1,5 +1,5 @@
 import type { ExchangeRequest, MatchResult } from '../types';
-import { exchangeRequests, currentUserId, currentUserName } from '../data/mockData';
+import { exchangeRequests } from '../data/mockData';
 import { notificationService } from './notificationService';
 
 let exchangeStore = [...exchangeRequests];
@@ -22,21 +22,22 @@ export const exchangeService = {
   },
 
   addExchangeRequest: (
-    data: Omit<ExchangeRequest, 'id' | 'userId' | 'userName' | 'createdAt'>
+    data: Omit<ExchangeRequest, 'id' | 'userId' | 'userName' | 'createdAt'>,
+    currentUser: { id: string; name: string }
   ): ExchangeRequest => {
     const newRequest: ExchangeRequest = {
       ...data,
       id: generateId(),
-      userId: currentUserId,
-      userName: currentUserName,
+      userId: currentUser.id,
+      userName: currentUser.name,
       createdAt: new Date().toISOString(),
     };
     exchangeStore.push(newRequest);
-    notificationService.generateNotificationsForNewRequest(newRequest, exchangeStore);
+    notificationService.generateNotificationsForNewRequest(newRequest, exchangeStore, currentUser.id);
     return newRequest;
   },
 
-  getMatches: (): MatchResult[] => {
+  getMatches: (currentUserId: string): MatchResult[] => {
     const myRequests = exchangeStore.filter((r) => r.userId === currentUserId);
     const otherRequests = exchangeStore.filter((r) => r.userId !== currentUserId);
 

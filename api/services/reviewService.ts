@@ -1,5 +1,5 @@
 import type { Review, Exchange, UserRating } from '../types';
-import { reviews, exchanges, userRatings, currentUserId, currentUserName } from '../data/mockData';
+import { reviews, exchanges, userRatings } from '../data/mockData';
 
 let reviewStore = [...reviews];
 let exchangeStore = [...exchanges];
@@ -60,14 +60,17 @@ export const reviewService = {
     );
   },
 
-  addReview: (data: {
-    exchangeId: string;
-    toUserId: string;
-    toUserName: string;
-    rating: number;
-    comment: string;
-    cartridgeTitle: string;
-  }): Review => {
+  addReview: (
+    data: {
+      exchangeId: string;
+      toUserId: string;
+      toUserName: string;
+      rating: number;
+      comment: string;
+      cartridgeTitle: string;
+    },
+    currentUser: { id: string; name: string }
+  ): Review => {
     const exchange = exchangeStore.find((e) => e.id === data.exchangeId);
     if (!exchange) {
       throw new Error('Exchange not found');
@@ -78,7 +81,7 @@ export const reviewService = {
     }
 
     const existingReview = reviewStore.find(
-      (r) => r.exchangeId === data.exchangeId && r.fromUserId === currentUserId
+      (r) => r.exchangeId === data.exchangeId && r.fromUserId === currentUser.id
     );
     if (existingReview) {
       throw new Error('You have already reviewed this exchange');
@@ -87,14 +90,14 @@ export const reviewService = {
     const newReview: Review = {
       ...data,
       id: generateId(),
-      fromUserId: currentUserId,
-      fromUserName: currentUserName,
+      fromUserId: currentUser.id,
+      fromUserName: currentUser.name,
       createdAt: new Date().toISOString(),
     };
 
     reviewStore.push(newReview);
 
-    if (exchange.initiatorUserId === currentUserId) {
+    if (exchange.initiatorUserId === currentUser.id) {
       exchange.initiatorReviewed = true;
     } else {
       exchange.targetReviewed = true;
@@ -127,25 +130,28 @@ export const reviewService = {
     return userRatingStore;
   },
 
-  getMyExchanges: (): Exchange[] => {
+  getMyExchanges: (currentUserId: string): Exchange[] => {
     return exchangeStore
       .filter((e) => e.initiatorUserId === currentUserId || e.targetUserId === currentUserId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
-  createExchange: (data: {
-    requestId: string;
-    matchRequestId: string;
-    targetUserId: string;
-    targetUserName: string;
-    cartridgeTitle: string;
-    platform: string;
-  }): Exchange => {
+  createExchange: (
+    data: {
+      requestId: string;
+      matchRequestId: string;
+      targetUserId: string;
+      targetUserName: string;
+      cartridgeTitle: string;
+      platform: string;
+    },
+    currentUser: { id: string; name: string }
+  ): Exchange => {
     const newExchange: Exchange = {
       ...data,
       id: generateId(),
-      initiatorUserId: currentUserId,
-      initiatorUserName: currentUserName,
+      initiatorUserId: currentUser.id,
+      initiatorUserName: currentUser.name,
       status: 'PENDING',
       initiatorReviewed: false,
       targetReviewed: false,
@@ -174,7 +180,7 @@ export const reviewService = {
     return exchange;
   },
 
-  getPendingReviews: (): Exchange[] => {
+  getPendingReviews: (currentUserId: string): Exchange[] => {
     return exchangeStore.filter((e) => {
       if (e.status !== 'COMPLETED') return false;
       if (e.initiatorUserId === currentUserId && !e.initiatorReviewed) return true;

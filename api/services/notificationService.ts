@@ -1,5 +1,4 @@
 import type { ExchangeNotification, ExchangeRequest } from '../types';
-import { currentUserId } from '../data/mockData';
 
 let notificationsStore: ExchangeNotification[] = [];
 
@@ -75,7 +74,8 @@ export const notificationService = {
 
   generateNotificationsForNewRequest: (
     newRequest: ExchangeRequest,
-    allRequests: ExchangeRequest[]
+    allRequests: ExchangeRequest[],
+    currentUserId: string
   ): ExchangeNotification[] => {
     const createdNotifications: ExchangeNotification[] = [];
     const otherRequests = allRequests.filter((r) => r.userId !== newRequest.userId);
@@ -135,7 +135,7 @@ export const notificationService = {
     notificationsStore = [
       {
         id: 'notif1',
-        userId: currentUserId,
+        userId: 'user1',
         type: 'MATCH_FOUND',
         matchRequestId: 'ex1',
         matchUserName: '复古玩家小王',
@@ -151,7 +151,7 @@ export const notificationService = {
       },
       {
         id: 'notif2',
-        userId: currentUserId,
+        userId: 'user1',
         type: 'MATCH_FOUND',
         matchRequestId: 'ex3',
         matchUserName: 'GB爱好者',
@@ -165,6 +165,53 @@ export const notificationService = {
         isRead: true,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
       },
+      {
+        id: 'notif3',
+        userId: 'user2',
+        type: 'MATCH_FOUND',
+        matchRequestId: 'mywant1',
+        matchUserName: '像素收藏家',
+        matchCartridgeTitle: '超级马里奥兄弟',
+        matchPlatform: 'FC',
+        matchType: 'WANT',
+        myRequestId: 'ex1',
+        myCartridgeTitle: '超级马里奥兄弟3',
+        score: 80,
+        details: '平台匹配、标题高度相关',
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      },
+      {
+        id: 'notif4',
+        userId: 'user4',
+        type: 'MATCH_FOUND',
+        matchRequestId: 'mywant2',
+        matchUserName: '像素收藏家',
+        matchCartridgeTitle: '口袋妖怪',
+        matchPlatform: 'GB',
+        matchType: 'WANT',
+        myRequestId: 'ex3',
+        myCartridgeTitle: '口袋妖怪 黄',
+        score: 60,
+        details: '平台匹配、关键词匹配: 口袋妖怪',
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+      },
     ];
+  },
+
+  createNotification: (
+    data: Omit<ExchangeNotification, 'id' | 'userId' | 'isRead' | 'createdAt'>,
+    userId: string
+  ): ExchangeNotification => {
+    const newNotification: ExchangeNotification = {
+      ...data,
+      id: generateId(),
+      userId,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    notificationsStore.push(newNotification);
+    return newNotification;
   },
 };

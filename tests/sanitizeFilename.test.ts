@@ -97,6 +97,71 @@ test('替换符可自定义', () => {
   assert.strictEqual(result, '超级-马里奥');
 });
 
+test('自定义替换符为正则元字符 - 点号(.)', () => {
+  const result = sanitizeFilename('A::B??C', '.');
+  assert.strictEqual(result, 'A.B.C', '使用点号作为替换符时，正则应正确转义，不应将任意字符匹配为替换符');
+});
+
+test('自定义替换符为正则元字符 - 星号(*) - 合并连续替换符', () => {
+  const result = sanitizeFilename('A***B', '*');
+  assert.strictEqual(result, 'A*B', '连续非法字符应合并为单个 *，不应因星号未转义导致匹配异常');
+});
+
+test('自定义替换符为正则元字符 - 加号(+)', () => {
+  const result = sanitizeFilename('A:::B', '+');
+  assert.strictEqual(result, 'A+B', '使用加号作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 问号(?)', () => {
+  const result = sanitizeFilename('A::B::C', '?');
+  assert.strictEqual(result, 'A?B?C', '使用问号作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 美元符($)', () => {
+  const result = sanitizeFilename('A::B', '$');
+  assert.strictEqual(result, 'A$B', '使用美元符作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 脱字符(^)', () => {
+  const result = sanitizeFilename('A::B', '^');
+  assert.strictEqual(result, 'A^B', '使用脱字符作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 花括号({})', () => {
+  const result = sanitizeFilename('A:::B', '{');
+  assert.strictEqual(result, 'A{B', '使用左花括号作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 圆括号(())', () => {
+  const result = sanitizeFilename('A::B', '(');
+  assert.strictEqual(result, 'A(B', '使用左圆括号作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 方括号([])', () => {
+  const result = sanitizeFilename('A:::B', '[');
+  assert.strictEqual(result, 'A[B', '使用左方括号作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 反斜杠(\\)', () => {
+  const result = sanitizeFilename('A:::B', '\\');
+  assert.strictEqual(result, 'A\\B', '使用反斜杠作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 - 竖线(|)', () => {
+  const result = sanitizeFilename('A::B', '|');
+  assert.strictEqual(result, 'A|B', '使用竖线作为替换符时，正则应正确转义');
+});
+
+test('自定义替换符为正则元字符 + 全部非法字符场景', () => {
+  const result = sanitizeFilename('://*?"<>|\\', '.');
+  assert.strictEqual(result, 'unnamed', '使用点号作替换符且全部为非法字符时，应正确识别纯替换符结果并返回 fallback');
+});
+
+test('自定义替换符为正则元字符 + onlyReplacementAndSpace 判定', () => {
+  const result = sanitizeFilename(':::', '+');
+  assert.strictEqual(result, 'unnamed', 'onlyReplacementAndSpace 使用 + 作为替换符时应正确转义');
+});
+
 test('控制字符被清理 - 换行符', () => {
   const result = sanitizeFilename('第一行\n第二行');
   assert.ok(!result.includes('\n'), `结果不应包含换行符: ${result}`);

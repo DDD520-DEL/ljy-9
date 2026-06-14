@@ -112,10 +112,12 @@ export const sanitizeFilename = (
 
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
   cleaned = cleaned.replace(/\.+$/g, '');
-  cleaned = cleaned.replace(new RegExp(`${replacement}+`, 'g'), replacement);
+
+  const escapedReplacement = replacement.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  cleaned = cleaned.replace(new RegExp(`${escapedReplacement}+`, 'g'), replacement);
   cleaned = cleaned.trim();
 
-  const onlyReplacementAndSpace = new RegExp(`^[\\s${replacement.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}]+$`);
+  const onlyReplacementAndSpace = new RegExp(`^[\\s${escapedReplacement}]+$`);
   if (onlyReplacementAndSpace.test(cleaned)) {
     return fallback;
   }

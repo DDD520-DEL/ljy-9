@@ -7,34 +7,38 @@ const StatsCard = () => {
 
   if (!stats || !stats.valueChange || !stats.achievementsProgress) return null;
 
+  const totalCollectionValue = (stats.totalValue || 0) + (stats.totalAccessoryValue || 0);
+
   const statItems = [
     {
-      label: '卡带总数',
-      value: stats.totalCartridges,
-      suffix: '张',
+      label: '收藏总数',
+      value: stats.totalCollectionCount || stats.totalCartridges + (stats.totalAccessories || 0),
+      suffix: '件',
+      subLabel: `卡带 ${stats.totalCartridges} + 配件 ${stats.totalAccessories || 0}`,
       color: 'text-neon-purple',
       bgColor: 'from-neon-purple/20 to-transparent',
     },
     {
-      label: '收藏总价值',
-      value: formatPrice(stats.totalValue),
-      suffix: '',
-      color: 'text-neon-amber',
-      bgColor: 'from-neon-amber/20 to-transparent',
-    },
-    {
-      label: '覆盖平台',
-      value: stats.totalPlatforms,
-      suffix: '个',
+      label: '卡带总数',
+      value: stats.totalCartridges,
+      suffix: '张',
       color: 'text-neon-cyan',
       bgColor: 'from-neon-cyan/20 to-transparent',
     },
     {
-      label: '游戏系列',
-      value: stats.totalSeries,
-      suffix: '个',
-      color: 'text-neon-green',
-      bgColor: 'from-neon-green/20 to-transparent',
+      label: '收藏总价值',
+      value: formatPrice(totalCollectionValue),
+      suffix: '',
+      subLabel: `卡带 ${formatPrice(stats.totalValue)} + 配件 ${formatPrice(stats.totalAccessoryValue || 0)}`,
+      color: 'text-neon-amber',
+      bgColor: 'from-neon-amber/20 to-transparent',
+    },
+    {
+      label: '配件数量',
+      value: stats.totalAccessories || 0,
+      suffix: '件',
+      color: 'text-neon-pink',
+      bgColor: 'from-neon-pink/20 to-transparent',
     },
   ];
 
@@ -50,6 +54,11 @@ const StatsCard = () => {
             {item.value}
             <span className="text-sm ml-1">{item.suffix}</span>
           </p>
+          {item.subLabel && (
+            <p className="font-retro text-[10px] text-gray-500 mt-1">
+              {item.subLabel}
+            </p>
+          )}
         </div>
       ))}
 
@@ -99,12 +108,17 @@ const StatsCard = () => {
                 <div
                   className="progress-fill"
                   style={{
-                    width: `${(stats.achievementsProgress.unlocked / stats.achievementsProgress.total) * 100}%`,
+                    width: `${
+                      (stats.achievementsProgress.unlocked /
+                        stats.achievementsProgress.total) *
+                      100
+                    }%`,
                   }}
                 />
               </div>
               <span className="font-pixel text-sm text-neon-purple">
-                {stats.achievementsProgress.unlocked}/{stats.achievementsProgress.total}
+                {stats.achievementsProgress.unlocked}/
+                {stats.achievementsProgress.total}
               </span>
             </div>
           </div>

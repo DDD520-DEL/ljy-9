@@ -21,6 +21,7 @@ import {
   Moon,
   Clock,
   Layers,
+  Package,
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { formatRelativeTime } from '../utils/format';
@@ -46,6 +47,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: '仪表盘', icon: LayoutDashboard },
     { path: '/collection', label: '藏品库', icon: Library },
+    { path: '/accessories', label: '配件周边', icon: Package },
     { path: '/collection/timeline', label: '时间轴', icon: Clock },
     { path: '/encyclopedia', label: '游戏百科', icon: BookOpen },
     { path: '/platforms', label: '平台专区', icon: Layers },

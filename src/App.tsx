@@ -15,6 +15,9 @@ import Leaderboard from './pages/Leaderboard';
 import GameEncyclopedia from './pages/GameEncyclopedia';
 import CollectionTimeline from './pages/CollectionTimeline';
 import PlatformZones from './pages/PlatformZones';
+import Accessories from './pages/Accessories';
+import AccessoryDetail from './pages/AccessoryDetail';
+import AddAccessory from './pages/AddAccessory';
 import { useStore } from './stores/useStore';
 
 function App() {
@@ -26,6 +29,8 @@ function App() {
     fetchUnreadCount,
     fetchNotifications,
     fetchWishlist,
+    fetchAccessories,
+    fetchAccessoryMetaData,
     theme,
   } = useStore();
 
@@ -41,6 +46,8 @@ function App() {
     fetchUnreadCount();
     fetchNotifications();
     fetchWishlist();
+    fetchAccessories();
+    fetchAccessoryMetaData();
 
     const interval = setInterval(() => {
       fetchUnreadCount();
@@ -68,6 +75,9 @@ function App() {
           <Route path="/yearly-review" element={<YearlyReview />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/platforms" element={<PlatformZones />} />
+          <Route path="/accessories" element={<Accessories />} />
+          <Route path="/accessories/add" element={<AddAccessory />} />
+          <Route path="/accessories/:id" element={<AccessoryDetail />} />
         </Routes>
       </main>
     </div>

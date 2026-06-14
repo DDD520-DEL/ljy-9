@@ -67,10 +67,14 @@ export interface MatchResult {
 
 export interface Stats {
   totalCartridges: number;
+  totalAccessories: number;
+  totalCollectionCount: number;
   totalValue: number;
+  totalAccessoryValue: number;
   totalPlatforms: number;
   totalSeries: number;
   recentAdditions: Cartridge[];
+  recentAccessories: Accessory[];
   valueChange: {
     week: number;
     month: number;
@@ -234,4 +238,40 @@ export interface EncyclopediaPlatform {
   totalGames: number;
   icon: string;
   color: string;
+}
+
+export type AccessoryCategory =
+  | 'CONTROLLER'
+  | 'GUIDE_BOOK'
+  | 'LIMITED_EDITION'
+  | 'CONSOLE'
+  | 'CABLE'
+  | 'MEMORY_CARD'
+  | 'SOUNDTRACK'
+  | 'FIGURINE'
+  | 'ART_BOOK'
+  | 'POSTER'
+  | 'MERCHANDISE'
+  | 'OTHER';
+
+export interface Accessory {
+  id: string;
+  name: string;
+  category: AccessoryCategory;
+  platform?: string;
+  series?: string;
+  manufacturer?: string;
+  condition: 'MINT' | 'NEAR_MINT' | 'VERY_GOOD' | 'GOOD' | 'FAIR' | 'POOR';
+  isOfficial: boolean;
+  isLimitedEdition: boolean;
+  editionNumber?: string;
+  purchasePrice: number;
+  purchaseDate: string;
+  releaseYear?: number;
+  quantity: number;
+  coverImage: string;
+  notes: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
 }

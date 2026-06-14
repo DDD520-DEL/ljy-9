@@ -1,6 +1,7 @@
 import type { Stats } from '../types';
 import { cartridgeService } from './cartridgeService';
 import { achievementService } from './achievementService';
+import { accessoryService } from './accessoryService';
 
 interface MonthlyValuePoint {
   month: string;
@@ -12,8 +13,9 @@ export const statsService = {
   getStats: (): Stats => {
     const { data: cartridges } = cartridgeService.getCartridges();
     const achievements = achievementService.getAchievements();
+    const accessoryStats = accessoryService.getStats();
 
-    const totalValue = cartridges.reduce((sum, c) => sum + c.purchasePrice, 0);
+    const cartridgeValue = cartridges.reduce((sum, c) => sum + c.purchasePrice, 0);
     const platforms = new Set(cartridges.map((c) => c.platform));
     const series = new Set(cartridges.map((c) => c.series));
 
@@ -25,10 +27,14 @@ export const statsService = {
 
     return {
       totalCartridges: cartridges.length,
-      totalValue,
+      totalAccessories: accessoryStats.count,
+      totalCollectionCount: cartridges.length + accessoryStats.count,
+      totalValue: cartridgeValue,
+      totalAccessoryValue: accessoryStats.totalValue,
       totalPlatforms: platforms.size,
       totalSeries: series.size,
       recentAdditions,
+      recentAccessories: accessoryStats.recent,
       valueChange: {
         week: 5.2,
         month: 12.8,

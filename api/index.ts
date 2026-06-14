@@ -8,6 +8,7 @@ import notificationRoutes from './routes/notifications';
 import reviewRoutes from './routes/reviews';
 import priceAlertRoutes from './routes/priceAlerts';
 import leaderboardRoutes from './routes/leaderboard';
+import accessoryRoutes from './routes/accessories';
 import { notificationService } from './services/notificationService';
 import { authMiddleware } from './middleware/auth';
 
@@ -28,6 +29,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/price-alerts', priceAlertRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/accessories', accessoryRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });

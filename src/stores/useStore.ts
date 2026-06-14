@@ -16,6 +16,8 @@ import type {
   PriceAlertSettings,
   WishlistItem,
   CollectorLeaderboardEntry,
+  Accessory,
+  AccessoryCategory,
 } from '../types';
 
 type Theme = 'dark' | 'light';
@@ -48,6 +50,17 @@ interface AppState {
   priceAlerts: PriceAlert[];
   priceAlertSettings: PriceAlertSettings | null;
   wishlist: WishlistItem[];
+  accessories: Accessory[];
+  selectedAccessory: Accessory | null;
+  accessoryCategories: AccessoryCategory[];
+  accessoryPlatforms: string[];
+  accessoryTags: string[];
+  accessorySortBy: string;
+  accessorySearch: string;
+  accessoryFilters: {
+    category: AccessoryCategory[];
+    condition: string[];
+  };
 
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
@@ -138,6 +151,16 @@ interface AppState {
   setTagLogic: (logic: 'AND' | 'OR') => void;
   refreshTagsList: () => void;
   getPresetTags: () => string[];
+
+  fetchAccessories: () => Promise<void>;
+  fetchAccessory: (id: string) => Promise<void>;
+  fetchAccessoryMetaData: () => Promise<void>;
+  addAccessory: (data: Omit<Accessory, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateAccessory: (id: string, data: Partial<Accessory>) => Promise<void>;
+  deleteAccessory: (id: string) => Promise<boolean>;
+  setAccessorySortBy: (sort: string) => void;
+  setAccessorySearch: (search: string) => void;
+  setAccessoryFilters: (filters: Partial<{ category: AccessoryCategory[]; condition: string[] }>) => void;
 }
 
 const API_BASE = '/api';
@@ -198,6 +221,17 @@ export const useStore = create<AppState>((set, get) => ({
   priceAlerts: [],
   priceAlertSettings: null,
   wishlist: [],
+  accessories: [],
+  selectedAccessory: null,
+  accessoryCategories: [],
+  accessoryPlatforms: [],
+  accessoryTags: [],
+  accessorySortBy: 'date_desc',
+  accessorySearch: '',
+  accessoryFilters: {
+    category: [],
+    condition: [],
+  },
   leaderboard: [],
   myLeaderboardRank: null,
   leaderboardSortBy: 'totalScore',
@@ -244,6 +278,7 @@ export const useStore = create<AppState>((set, get) => ({
     get().fetchExchanges();
     get().fetchPendingReviews();
     get().fetchWishlist();
+    get().fetchAccessories();
   },
 
   fetchCartridges: async () => {
@@ -1091,5 +1126,153 @@ export const useStore = create<AppState>((set, get) => ({
     const stored = localStorage.getItem(storageKey);
     const userPresets = stored ? JSON.parse(stored) : [];
     return Array.from(new Set([...defaultPresets, ...userPresets])).sort();
+  },
+
+  fetchAccessories: async () => {
+    set({ isLoading: true });
+    try {
+      const { accessorySortBy, accessorySearch, accessoryFilters } = get();
+      const params = new URLSearchParams();
+      if (accessorySearch) params.set('search', accessorySearch);
+      if (accessorySortBy) params.set('sort', accessorySortBy);
+      if (accessoryFilters.category.length === 1) params.set('category', accessoryFilters.category[0]);
+      if (accessoryFilters.condition.length === 1) params.set('condition', accessoryFilters.condition[0]);
+
+      const res = await fetch(`${API_BASE}/accessories?${params}`, {
+        headers: get().getAuthHeaders(),
+      });
+      const result = await res.json();
+      let data = result.data || [];
+
+      data = data.map((a: Accessory) => ({
+        ...a,
+        tags: a.tags || [],
+      }));
+
+      if (accessoryFilters.category.length > 1) {
+        data = data.filter((a: Accessory) => accessoryFilters.category.includes(a.category));
+      }
+      if (accessoryFilters.condition.length > 1) {
+        data = data.filter((a: Accessory) => accessoryFilters.condition.includes(a.condition));
+      }
+
+      set({ accessories: data, isLoading: false });
+    } catch (error) {
+      console.error('Failed to fetch accessories:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  fetchAccessory: async (id: string) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/accessories/${id}`, {
+        headers: get().getAuthHeaders(),
+      });
+      const data = await res.json();
+      const accessoryWithTags = { ...data, tags: data.tags || [] };
+      set({ selectedAccessory: accessoryWithTags, isLoading: false });
+    } catch (error) {
+      console.error('Failed to fetch accessory:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  fetchAccessoryMetaData: async () => {
+    try {
+      const [categoriesRes, platformsRes, tagsRes] = await Promise.all([
+        fetch(`${API_BASE}/accessories/categories`),
+        fetch(`${API_BASE}/accessories/platforms`),
+        fetch(`${API_BASE}/accessories/tags`),
+      ]);
+      const [categories, platforms, tags] = await Promise.all([
+        categoriesRes.json(),
+        platformsRes.json(),
+        tagsRes.json(),
+      ]);
+      set({ accessoryCategories: categories, accessoryPlatforms: platforms, accessoryTags: tags });
+    } catch (error) {
+      console.error('Failed to fetch accessory meta data:', error);
+    }
+  },
+
+  addAccessory: async (data) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/accessories`, {
+        method: 'POST',
+        headers: get().getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
+      const newAccessory = await res.json();
+      set((state) => ({
+        accessories: [newAccessory, ...state.accessories],
+        isLoading: false,
+      }));
+      get().fetchStats();
+      get().fetchAccessoryMetaData();
+    } catch (error) {
+      console.error('Failed to add accessory:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  updateAccessory: async (id, data) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/accessories/${id}`, {
+        method: 'PUT',
+        headers: get().getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
+      const updated = await res.json();
+      set((state) => ({
+        accessories: state.accessories.map((a) => (a.id === id ? updated : a)),
+        selectedAccessory: state.selectedAccessory?.id === id ? updated : state.selectedAccessory,
+        isLoading: false,
+      }));
+      get().fetchStats();
+    } catch (error) {
+      console.error('Failed to update accessory:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  deleteAccessory: async (id) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_BASE}/accessories/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+      if (result.success) {
+        set((state) => ({
+          accessories: state.accessories.filter((a) => a.id !== id),
+          isLoading: false,
+        }));
+        get().fetchStats();
+        return true;
+      }
+      set({ isLoading: false });
+      return false;
+    } catch (error) {
+      console.error('Failed to delete accessory:', error);
+      set({ isLoading: false });
+      return false;
+    }
+  },
+
+  setAccessorySortBy: (sort) => {
+    set({ accessorySortBy: sort });
+  },
+
+  setAccessorySearch: (search) => {
+    set({ accessorySearch: search });
+  },
+
+  setAccessoryFilters: (filters) => {
+    set((state) => ({
+      accessoryFilters: { ...state.accessoryFilters, ...filters },
+    }));
   },
 }));

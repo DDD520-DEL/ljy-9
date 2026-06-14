@@ -12,20 +12,22 @@ interface YearGroup {
 }
 
 const CollectionTimeline = () => {
-  const { cartridges, isLoading, fetchCartridges } = useStore();
+  const { cartridges, isLoading } = useStore();
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
+
+  const cartridgesWithDate = useMemo(() => {
+    return cartridges.filter((c) => c.purchaseDate);
+  }, [cartridges]);
 
   const yearGroups = useMemo(() => {
     const groups = new Map<number, Cartridge[]>();
 
-    cartridges.forEach((cartridge) => {
-      if (cartridge.purchaseDate) {
-        const year = new Date(cartridge.purchaseDate).getFullYear();
-        if (!groups.has(year)) {
-          groups.set(year, []);
-        }
-        groups.get(year)!.push(cartridge);
+    cartridgesWithDate.forEach((cartridge) => {
+      const year = new Date(cartridge.purchaseDate).getFullYear();
+      if (!groups.has(year)) {
+        groups.set(year, []);
       }
+      groups.get(year)!.push(cartridge);
     });
 
     const sortedYears = Array.from(groups.keys()).sort((a, b) => b - a);
@@ -49,7 +51,7 @@ const CollectionTimeline = () => {
         totalValue,
       };
     });
-  }, [cartridges]);
+  }, [cartridgesWithDate]);
 
   const toggleYear = (year: number) => {
     setExpandedYears((prev) => {
@@ -72,8 +74,8 @@ const CollectionTimeline = () => {
   };
 
   const totalAllValue = useMemo(() => {
-    return cartridges.reduce((sum, c) => sum + (c.purchasePrice || 0), 0);
-  }, [cartridges]);
+    return cartridgesWithDate.reduce((sum, c) => sum + (c.purchasePrice || 0), 0);
+  }, [cartridgesWithDate]);
 
   const getYearColor = (year: number) => {
     const currentYear = new Date().getFullYear();
@@ -103,7 +105,7 @@ const CollectionTimeline = () => {
             收藏时间轴
           </h1>
           <p className="font-retro text-gray-400 text-lg">
-            共 {cartridges.length} 张卡带 · 总投入 {formatPrice(totalAllValue)}
+            共 {cartridgesWithDate.length} 张卡带 · 总投入 {formatPrice(totalAllValue)}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -137,7 +139,7 @@ const CollectionTimeline = () => {
         <div className="relative">
           <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-neon-cyan via-neon-purple to-neon-pink rounded-full" />
 
-          {yearGroups.map((group, groupIndex) => {
+          {yearGroups.map((group) => {
             const isExpanded = expandedYears.has(group.year);
             return (
               <div key={group.year} className="relative mb-8">

@@ -13,6 +13,7 @@ import YearlyReview from './pages/YearlyReview';
 import Wishlist from './pages/Wishlist';
 import Leaderboard from './pages/Leaderboard';
 import GameEncyclopedia from './pages/GameEncyclopedia';
+import CollectionTimeline from './pages/CollectionTimeline';
 import { useStore } from './stores/useStore';
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/collection" element={<Collection />} />
+          <Route path="/collection/timeline" element={<CollectionTimeline />} />
           <Route path="/collection/add" element={<AddCartridge />} />
           <Route path="/collection/:id" element={<CartridgeDetail />} />
           <Route path="/encyclopedia" element={<GameEncyclopedia />} />

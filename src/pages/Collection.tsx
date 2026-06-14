@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import Sidebar from '../components/Sidebar';
 import CartridgeCard from '../components/CartridgeCard';
 import BulkImportModal from '../components/BulkImportModal';
 import CartridgeCompareModal from '../components/CartridgeCompareModal';
-import { Filter, Grid, List, Plus, Search, SortAsc, FileText, Download, Loader2, UploadCloud, ArrowUpDown, X, CheckSquare, Check, Table } from 'lucide-react';
+import { Filter, Grid, List, Plus, Search, SortAsc, FileText, Download, Loader2, UploadCloud, ArrowUpDown, X, CheckSquare, Check, Table, Clock } from 'lucide-react';
 import { generateReportData } from '../utils/report';
 import { exportReportPDF } from '../utils/pdfExport';
 import { exportCartridgesToExcel } from '../utils/excel';
@@ -280,6 +280,7 @@ const Collection = () => {
                         ? 'bg-neon-purple/20 text-neon-purple'
                         : 'text-gray-400 hover:text-white'
                     }`}
+                    title="网格视图"
                   >
                     <Grid className="w-5 h-5" />
                   </button>
@@ -290,9 +291,17 @@ const Collection = () => {
                         ? 'bg-neon-purple/20 text-neon-purple'
                         : 'text-gray-400 hover:text-white'
                     }`}
+                    title="列表视图"
                   >
                     <List className="w-5 h-5" />
                   </button>
+                  <Link
+                    to="/collection/timeline"
+                    className={`p-2 text-gray-400 hover:text-white hover:bg-neon-cyan/10`}
+                    title="时间轴视图"
+                  >
+                    <Clock className="w-5 h-5" />
+                  </Link>
                 </div>
               </div>
             </div>

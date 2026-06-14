@@ -320,13 +320,30 @@ const Collection = () => {
                         alt={cartridge.title}
                         className="w-20 h-20 object-cover rounded"
                       />
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <h3 className="font-pixel text-sm text-white group-hover:text-neon-cyan transition-colors">
                           {cartridge.title}
                         </h3>
                         <p className="font-retro text-gray-400">
                           {cartridge.platform} · {cartridge.series} · {cartridge.releaseYear}
                         </p>
+                        {cartridge.tags && cartridge.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {cartridge.tags.slice(0, 4).map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 bg-neon-purple/15 text-neon-purple font-retro text-[10px] rounded border border-neon-purple/25"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                            {cartridge.tags.length > 4 && (
+                              <span className="px-1.5 py-0.5 text-gray-500 font-retro text-[10px]">
+                                +{cartridge.tags.length - 4}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="font-pixel text-sm text-neon-amber">
@@ -345,13 +362,30 @@ const Collection = () => {
                         alt={cartridge.title}
                         className="w-20 h-20 object-cover rounded"
                       />
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <h3 className="font-pixel text-sm text-white group-hover:text-neon-cyan transition-colors">
                           {cartridge.title}
                         </h3>
                         <p className="font-retro text-gray-400">
                           {cartridge.platform} · {cartridge.series} · {cartridge.releaseYear}
                         </p>
+                        {cartridge.tags && cartridge.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {cartridge.tags.slice(0, 4).map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-1.5 py-0.5 bg-neon-purple/15 text-neon-purple font-retro text-[10px] rounded border border-neon-purple/25"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                            {cartridge.tags.length > 4 && (
+                              <span className="px-1.5 py-0.5 text-gray-500 font-retro text-[10px]">
+                                +{cartridge.tags.length - 4}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="font-pixel text-sm text-neon-amber">

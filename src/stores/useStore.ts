@@ -33,6 +33,7 @@ interface AppState {
   platforms: string[];
   seriesList: string[];
   publishers: string[];
+  tagsList: string[];
   isLoading: boolean;
   currentView: 'grid' | 'list';
   reviews: Review[];
@@ -123,6 +124,12 @@ interface AppState {
   fetchLeaderboard: (sortBy?: 'totalScore' | 'collectionCount' | 'achievementScore' | 'exchangeReputation') => Promise<void>;
   fetchMyLeaderboardRank: () => Promise<void>;
   setLeaderboardSortBy: (sortBy: 'totalScore' | 'collectionCount' | 'achievementScore' | 'exchangeReputation') => void;
+
+  addTagToCartridge: (cartridgeId: string, tag: string) => Promise<boolean>;
+  removeTagFromCartridge: (cartridgeId: string, tag: string) => Promise<boolean>;
+  setTagLogic: (logic: 'AND' | 'OR') => void;
+  refreshTagsList: () => void;
+  getPresetTags: () => string[];
 }
 
 const API_BASE = '/api';
@@ -136,6 +143,8 @@ export const useStore = create<AppState>((set, get) => ({
     series: [],
     publisher: [],
     condition: [],
+    tags: [],
+    tagLogic: 'AND',
     search: '',
   },
   sortBy: 'date_desc',
@@ -148,6 +157,7 @@ export const useStore = create<AppState>((set, get) => ({
   platforms: [],
   seriesList: [],
   publishers: [],
+  tagsList: [],
   isLoading: false,
   currentView: 'grid',
   reviews: [],
@@ -212,6 +222,11 @@ export const useStore = create<AppState>((set, get) => ({
       const result = await res.json();
       let data = result.data || [];
 
+      data = data.map((c: Cartridge) => ({
+        ...c,
+        tags: c.tags || [],
+      }));
+
       if (filters.platform.length > 1) {
         data = data.filter((c: Cartridge) => filters.platform.includes(c.platform));
       }
@@ -224,8 +239,29 @@ export const useStore = create<AppState>((set, get) => ({
       if (filters.condition.length > 1) {
         data = data.filter((c: Cartridge) => filters.condition.includes(c.condition));
       }
+      if (filters.tags.length > 0) {
+        if (filters.tagLogic === 'AND') {
+          data = data.filter((c: Cartridge) =>
+            filters.tags.every((t) => c.tags?.includes(t))
+          );
+        } else {
+          data = data.filter((c: Cartridge) =>
+            filters.tags.some((t) => c.tags?.includes(t))
+          );
+        }
+      }
 
-      set({ cartridges: data, isLoading: false });
+      const allTags = new Set<string>();
+      data.forEach((c: Cartridge) => {
+        (c.tags || []).forEach((t) => allTags.add(t));
+      });
+      const { currentUser } = get();
+      const storageKey = `preset_tags_${currentUser.id}`;
+      const storedPreset = localStorage.getItem(storageKey);
+      if (storedPreset) {
+        JSON.parse(storedPreset).forEach((t: string) => allTags.add(t));
+      }
+      set({ cartridges: data, tagsList: Array.from(allTags).sort(), isLoading: false });
     } catch (error) {
       console.error('Failed to fetch cartridges:', error);
       set({ isLoading: false });
@@ -239,7 +275,8 @@ export const useStore = create<AppState>((set, get) => ({
         headers: get().getAuthHeaders(),
       });
       const data = await res.json();
-      set({ selectedCartridge: data, isLoading: false });
+      const cartridgeWithTags = { ...data, tags: data.tags || [] };
+      set({ selectedCartridge: cartridgeWithTags, isLoading: false });
     } catch (error) {
       console.error('Failed to fetch cartridge:', error);
       set({ isLoading: false });
@@ -854,5 +891,95 @@ export const useStore = create<AppState>((set, get) => ({
 
   setLeaderboardSortBy: (sortBy) => {
     set({ leaderboardSortBy: sortBy });
+  },
+
+  addTagToCartridge: async (cartridgeId, tag) => {
+    try {
+      const trimmedTag = tag.trim();
+      if (!trimmedTag) return false;
+
+      const cartridge = get().cartridges.find((c) => c.id === cartridgeId);
+      if (!cartridge) return false;
+
+      const currentTags = cartridge.tags || [];
+      if (currentTags.includes(trimmedTag)) return false;
+
+      const newTags = [...currentTags, trimmedTag];
+      await get().updateCartridge(cartridgeId, { tags: newTags });
+
+      const { currentUser } = get();
+      const storageKey = `preset_tags_${currentUser.id}`;
+      const stored = localStorage.getItem(storageKey);
+      const presetTags = stored ? new Set(JSON.parse(stored)) : new Set<string>();
+      presetTags.add(trimmedTag);
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(presetTags)));
+
+      get().refreshTagsList();
+      return true;
+    } catch (error) {
+      console.error('Failed to add tag:', error);
+      return false;
+    }
+  },
+
+  removeTagFromCartridge: async (cartridgeId, tag) => {
+    try {
+      const cartridge = get().cartridges.find((c) => c.id === cartridgeId);
+      if (!cartridge) return false;
+
+      const currentTags = cartridge.tags || [];
+      if (!currentTags.includes(tag)) return false;
+
+      const newTags = currentTags.filter((t) => t !== tag);
+      await get().updateCartridge(cartridgeId, { tags: newTags });
+
+      get().refreshTagsList();
+      return true;
+    } catch (error) {
+      console.error('Failed to remove tag:', error);
+      return false;
+    }
+  },
+
+  setTagLogic: (logic) => {
+    set((state) => ({
+      filters: { ...state.filters, tagLogic: logic },
+    }));
+  },
+
+  refreshTagsList: () => {
+    const { cartridges, currentUser } = get();
+    const allTags = new Set<string>();
+    cartridges.forEach((c) => {
+      (c.tags || []).forEach((t) => allTags.add(t));
+    });
+    const storageKey = `preset_tags_${currentUser.id}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      JSON.parse(stored).forEach((t: string) => allTags.add(t));
+    }
+    set({ tagsList: Array.from(allTags).sort() });
+  },
+
+  getPresetTags: () => {
+    const defaultPresets = [
+      '童年回忆',
+      '未拆封',
+      '待修复',
+      '稀有限定',
+      '朋友赠送',
+      '日淘入手',
+      '闲鱼淘货',
+      '展会购入',
+      '全套收藏',
+      '个人最爱',
+      '童年阴影',
+      '多人同乐',
+    ];
+    const { currentUser } = get();
+    const storageKey = `preset_tags_${currentUser.id}`;
+    const stored = localStorage.getItem(storageKey);
+    const userPresets = stored ? JSON.parse(stored) : [];
+    return Array.from(new Set([...defaultPresets, ...userPresets])).sort();
   },
 }));

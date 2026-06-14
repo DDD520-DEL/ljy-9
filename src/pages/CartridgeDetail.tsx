@@ -14,6 +14,9 @@ import {
   Edit3,
   Trash2,
   TrendingUp,
+  Plus,
+  X,
+  Hash,
 } from 'lucide-react';
 import {
   formatPrice,
@@ -26,9 +29,50 @@ import {
 const CartridgeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { selectedCartridge, priceHistory, fetchCartridge, fetchPriceHistory, deleteCartridge } =
-    useStore();
+  const {
+    selectedCartridge,
+    priceHistory,
+    fetchCartridge,
+    fetchPriceHistory,
+    deleteCartridge,
+    addTagToCartridge,
+    removeTagFromCartridge,
+    getPresetTags,
+  } = useStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [tagInput, setTagInput] = useState('');
+  const [isAddingTag, setIsAddingTag] = useState(false);
+
+  const presetTags = getPresetTags();
+
+  const handleAddTag = async (tagToAdd?: string) => {
+    const tag = (tagToAdd || tagInput).trim();
+    if (!tag || !id) return;
+    setIsAddingTag(true);
+    const success = await addTagToCartridge(id, tag);
+    if (success) {
+      setTagInput('');
+      await fetchCartridge(id);
+    }
+    setIsAddingTag(false);
+  };
+
+  const handleRemoveTag = async (tagToRemove: string) => {
+    if (!id) return;
+    setIsAddingTag(true);
+    const success = await removeTagFromCartridge(id, tagToRemove);
+    if (success) {
+      await fetchCartridge(id);
+    }
+    setIsAddingTag(false);
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -182,6 +226,75 @@ const CartridgeDetail = () => {
                   <BookOpen className="w-8 h-8" />
                 </div>
                 <p className="font-retro text-sm text-gray-400">说明书</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card-pixel p-5 rounded-lg">
+            <h3 className="font-pixel text-sm text-neon-purple mb-4 flex items-center gap-2">
+              <Hash className="w-5 h-5" />
+              自定义标签
+            </h3>
+
+            {(selectedCartridge.tags && selectedCartridge.tags.length > 0) ? (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedCartridge.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-neon-purple/20 text-neon-purple font-retro rounded border border-neon-purple/30"
+                  >
+                    #{tag}
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      disabled={isAddingTag}
+                      className="hover:text-neon-pink transition-colors ml-1 disabled:opacity-50"
+                      title="移除标签"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="font-retro text-gray-500 text-lg mb-4">暂无标签，添加一些来更好地分类你的藏品吧！</p>
+            )}
+
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                placeholder="输入标签后按回车添加..."
+                disabled={isAddingTag}
+                className="flex-1"
+              />
+              <button
+                onClick={() => handleAddTag()}
+                disabled={isAddingTag || !tagInput.trim()}
+                className="pixel-btn pixel-btn-cyan text-xs flex items-center gap-1 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" />
+                添加
+              </button>
+            </div>
+
+            <div>
+              <p className="font-retro text-sm text-gray-500 mb-2">💡 快捷添加：</p>
+              <div className="flex flex-wrap gap-2">
+                {presetTags
+                  .filter((t) => !selectedCartridge.tags?.includes(t))
+                  .slice(0, 10)
+                  .map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => handleAddTag(tag)}
+                      disabled={isAddingTag}
+                      className="px-2 py-1 font-retro text-xs bg-darker-navy border border-card-border rounded text-gray-400 hover:text-neon-cyan hover:border-neon-cyan/50 transition-colors disabled:opacity-50"
+                    >
+                      + {tag}
+                    </button>
+                  ))}
               </div>
             </div>
           </div>

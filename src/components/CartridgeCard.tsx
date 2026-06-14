@@ -137,6 +137,25 @@ const CartridgeCard = ({
             <BookOpen className={`w-3 h-3 ${cartridge.hasManual ? 'text-neon-green' : 'text-gray-600'}`} />
           </div>
         </div>
+
+        {cartridge.tags && cartridge.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-2">
+            {cartridge.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="px-1.5 py-0.5 bg-neon-purple/15 text-neon-purple font-retro text-[10px] rounded border border-neon-purple/25 truncate max-w-full"
+                title={tag}
+              >
+                #{tag}
+              </span>
+            ))}
+            {cartridge.tags.length > 3 && (
+              <span className="px-1.5 py-0.5 text-gray-500 font-retro text-[10px]">
+                +{cartridge.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </CardWrapper>
   );

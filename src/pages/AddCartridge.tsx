@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import PixelButton from '../components/PixelButton';
-import { ArrowLeft, Package, BookOpen, Disc, Upload } from 'lucide-react';
+import { ArrowLeft, Package, BookOpen, Disc, Upload, Tag, X, Plus } from 'lucide-react';
 import type { Cartridge } from '../types';
 
 type CartridgeFormData = Omit<Cartridge, 'id' | 'createdAt' | 'updatedAt'>;
@@ -28,7 +28,10 @@ const AddCartridge = () => {
     purchaseDate: new Date().toISOString().split('T')[0],
     notes: '',
     coverImage: '',
+    tags: [],
   });
+
+  const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
     if (editId) {
@@ -53,9 +56,35 @@ const AddCartridge = () => {
         purchaseDate: selectedCartridge.purchaseDate,
         notes: selectedCartridge.notes,
         coverImage: selectedCartridge.coverImage,
+        tags: selectedCartridge.tags || [],
       });
     }
   }, [selectedCartridge, editId]);
+
+  const { getPresetTags } = useStore();
+  const presetTags = getPresetTags();
+
+  const addTag = (tagToAdd?: string) => {
+    const tag = (tagToAdd || tagInput).trim();
+    if (!tag) return;
+    if (formData.tags.includes(tag)) return;
+    setFormData((prev) => ({ ...prev, tags: [...prev.tags, tag] }));
+    setTagInput('');
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tagToRemove),
+    }));
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,6 +350,72 @@ const AddCartridge = () => {
               rows={3}
               placeholder="记录一些关于这张卡带的故事..."
             />
+          </div>
+
+          <div className="card-pixel p-4 rounded-lg">
+            <h3 className="font-pixel text-xs text-neon-purple mb-4 flex items-center gap-2">
+              <Tag className="w-4 h-4" />
+              自定义标签
+            </h3>
+
+            {formData.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {formData.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-neon-purple/20 text-neon-purple font-retro text-sm rounded border border-neon-purple/30"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="hover:text-neon-pink transition-colors ml-1"
+                      title="移除标签"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                placeholder="输入标签后按回车添加..."
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => addTag()}
+                className="pixel-btn pixel-btn-cyan text-xs flex items-center gap-1 whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                添加
+              </button>
+            </div>
+
+            <div>
+              <p className="font-retro text-sm text-gray-500 mb-2">💡 推荐标签（点击添加）：</p>
+              <div className="flex flex-wrap gap-2">
+                {presetTags
+                  .filter((t) => !formData.tags.includes(t))
+                  .slice(0, 12)
+                  .map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => addTag(tag)}
+                      className="px-2 py-1 font-retro text-xs bg-darker-navy border border-card-border rounded text-gray-400 hover:text-neon-cyan hover:border-neon-cyan/50 transition-colors"
+                    >
+                      + {tag}
+                    </button>
+                  ))}
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-4 justify-end pt-4">

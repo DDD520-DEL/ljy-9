@@ -14,6 +14,7 @@ export interface Cartridge {
   purchaseDate: string;
   notes: string;
   coverImage: string;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -152,6 +153,8 @@ export interface Filters {
   series: string[];
   publisher: string[];
   condition: string[];
+  tags: string[];
+  tagLogic: 'AND' | 'OR';
   search: string;
 }
 

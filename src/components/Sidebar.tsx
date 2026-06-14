@@ -1,6 +1,6 @@
 import { useStore } from '../stores/useStore';
 import { getConditionLabel } from '../utils/format';
-import { X, Filter } from 'lucide-react';
+import { X, Filter, Hash, ToggleLeft, ToggleRight } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -8,11 +8,12 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
-  const { filters, setFilters, platforms, seriesList, publishers } = useStore();
+  const { filters, setFilters, platforms, seriesList, publishers, tagsList, setTagLogic } = useStore();
 
   const safePlatforms = Array.isArray(platforms) ? platforms : [];
   const safeSeriesList = Array.isArray(seriesList) ? seriesList : [];
   const safePublishers = Array.isArray(publishers) ? publishers : [];
+  const safeTagsList = Array.isArray(tagsList) ? tagsList : [];
 
   const toggleFilter = (category: keyof typeof filters, value: string) => {
     const current = filters[category] as string[];
@@ -28,6 +29,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       series: [],
       publisher: [],
       condition: [],
+      tags: [],
+      tagLogic: 'AND',
       search: '',
     });
   };
@@ -38,7 +41,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     filters.platform.length > 0 ||
     filters.series.length > 0 ||
     filters.publisher.length > 0 ||
-    filters.condition.length > 0;
+    filters.condition.length > 0 ||
+    filters.tags.length > 0;
 
   return (
     <>
@@ -164,6 +168,69 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               ))}
             </div>
           </div>
+
+          {safeTagsList.length > 0 && (
+            <div>
+              <h4 className="font-retro text-lg text-gray-300 mb-2 flex items-center gap-2">
+                <Hash className="w-4 h-4 text-neon-purple" />
+                标签
+              </h4>
+
+              {filters.tags.length > 1 && (
+                <div className="mb-3 p-2 bg-darker-navy rounded border border-card-border">
+                  <p className="font-retro text-xs text-gray-500 mb-2">匹配模式：</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setTagLogic('AND')}
+                      className={`flex-1 px-2 py-1.5 font-retro text-xs rounded transition-colors flex items-center justify-center gap-1 ${
+                        filters.tagLogic === 'AND'
+                          ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/50'
+                          : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+                      }`}
+                    >
+                      <ToggleRight className={`w-3.5 h-3.5 ${filters.tagLogic === 'AND' ? '' : 'opacity-50'}`} />
+                      全部匹配
+                    </button>
+                    <button
+                      onClick={() => setTagLogic('OR')}
+                      className={`flex-1 px-2 py-1.5 font-retro text-xs rounded transition-colors flex items-center justify-center gap-1 ${
+                        filters.tagLogic === 'OR'
+                          ? 'bg-neon-pink/20 text-neon-pink border border-neon-pink/50'
+                          : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-white'
+                      }`}
+                    >
+                      <ToggleLeft className={`w-3.5 h-3.5 ${filters.tagLogic === 'OR' ? '' : 'opacity-50'}`} />
+                      任意匹配
+                    </button>
+                  </div>
+                  <p className="font-retro text-[10px] text-gray-600 mt-1.5">
+                    {filters.tagLogic === 'AND'
+                      ? `需同时包含 ${filters.tags.length} 个标签`
+                      : `包含 ${filters.tags.length} 个标签中的任意一个即可`}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-1 max-h-60 overflow-y-auto">
+                {safeTagsList.map((tag) => (
+                  <label
+                    key={tag}
+                    className="flex items-center gap-2 cursor-pointer group"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.tags.includes(tag)}
+                      onChange={() => toggleFilter('tags', tag)}
+                      className="pixel-checkbox"
+                    />
+                    <span className="text-gray-400 group-hover:text-neon-purple transition-colors font-retro truncate">
+                      #{tag}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </>

@@ -18,7 +18,10 @@ import type {
   CollectorLeaderboardEntry,
 } from '../types';
 
+type Theme = 'dark' | 'light';
+
 interface AppState {
+  theme: Theme;
   cartridges: Cartridge[];
   selectedCartridge: Cartridge | null;
   priceHistory: PriceHistory[];
@@ -45,6 +48,9 @@ interface AppState {
   priceAlerts: PriceAlert[];
   priceAlertSettings: PriceAlertSettings | null;
   wishlist: WishlistItem[];
+
+  toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
 
   fetchCartridges: () => Promise<void>;
   fetchCartridge: (id: string) => Promise<void>;
@@ -136,7 +142,20 @@ interface AppState {
 
 const API_BASE = '/api';
 
+const getInitialTheme = (): Theme => {
+  try {
+    const stored = localStorage.getItem('retrovault_theme');
+    if (stored === 'dark' || stored === 'light') {
+      return stored;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return 'dark';
+};
+
 export const useStore = create<AppState>((set, get) => ({
+  theme: getInitialTheme(),
   cartridges: [],
   selectedCartridge: null,
   priceHistory: [],
@@ -182,6 +201,27 @@ export const useStore = create<AppState>((set, get) => ({
   leaderboard: [],
   myLeaderboardRank: null,
   leaderboardSortBy: 'totalScore',
+
+  toggleTheme: () => {
+    const newTheme = get().theme === 'dark' ? 'light' : 'dark';
+    set({ theme: newTheme });
+    try {
+      localStorage.setItem('retrovault_theme', newTheme);
+    } catch (e) {
+      // ignore
+    }
+    document.documentElement.setAttribute('data-theme', newTheme);
+  },
+
+  setTheme: (theme) => {
+    set({ theme });
+    try {
+      localStorage.setItem('retrovault_theme', theme);
+    } catch (e) {
+      // ignore
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  },
 
   getAuthHeaders: () => {
     const { currentUser } = get();

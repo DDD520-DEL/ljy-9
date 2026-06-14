@@ -17,6 +17,8 @@ import {
   Heart,
   Award,
   BookOpen,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { formatRelativeTime } from '../utils/format';
@@ -32,6 +34,8 @@ const Navbar = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     wishlist,
+    theme,
+    toggleTheme,
   } = useStore();
 
   const [showPanel, setShowPanel] = useState(false);
@@ -123,6 +127,18 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="relative w-10 h-10 rounded-lg bg-card-bg border-2 border-card-border flex items-center justify-center text-gray-400 hover:text-white hover:border-neon-purple transition-all group"
+            title={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-5 h-5 group-hover:text-neon-amber transition-colors" />
+            ) : (
+              <Moon className="w-5 h-5 group-hover:text-neon-purple transition-colors" />
+            )}
+          </button>
+
           <div className="relative" ref={panelRef}>
             <button
               onClick={handleTogglePanel}

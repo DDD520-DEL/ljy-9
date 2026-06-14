@@ -24,7 +24,12 @@ function App() {
     fetchUnreadCount,
     fetchNotifications,
     fetchWishlist,
+    theme,
   } = useStore();
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     fetchMetaData();

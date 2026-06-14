@@ -20,6 +20,7 @@ import {
   Sun,
   Moon,
   Clock,
+  Layers,
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { formatRelativeTime } from '../utils/format';
@@ -47,6 +48,7 @@ const Navbar = () => {
     { path: '/collection', label: '藏品库', icon: Library },
     { path: '/collection/timeline', label: '时间轴', icon: Clock },
     { path: '/encyclopedia', label: '游戏百科', icon: BookOpen },
+    { path: '/platforms', label: '平台专区', icon: Layers },
     { path: '/wishlist', label: '愿望单', icon: Heart, badge: wishlist.length },
     { path: '/yearly-review', label: '年度回顾', icon: Sparkles },
     { path: '/market', label: '行情中心', icon: TrendingUp },

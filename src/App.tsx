@@ -14,6 +14,7 @@ import Wishlist from './pages/Wishlist';
 import Leaderboard from './pages/Leaderboard';
 import GameEncyclopedia from './pages/GameEncyclopedia';
 import CollectionTimeline from './pages/CollectionTimeline';
+import PlatformZones from './pages/PlatformZones';
 import { useStore } from './stores/useStore';
 
 function App() {
@@ -66,6 +67,7 @@ function App() {
           <Route path="/exchange" element={<Exchange />} />
           <Route path="/yearly-review" element={<YearlyReview />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/platforms" element={<PlatformZones />} />
         </Routes>
       </main>
     </div>

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import StatsCard from '../components/StatsCard';
 import CartridgeCard from '../components/CartridgeCard';
@@ -7,7 +7,7 @@ import AchievementBadge from '../components/AchievementBadge';
 import PriceChart from '../components/PriceChart';
 import PriceAlertBanner from '../components/PriceAlertBanner';
 import CollectionValueChart from '../components/CollectionValueChart';
-import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2, BarChart3 } from 'lucide-react';
+import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2, BarChart3, Gift, ChevronRight } from 'lucide-react';
 import { generateReportData } from '../utils/report';
 import { exportReportPDF } from '../utils/pdfExport';
 
@@ -23,8 +23,28 @@ const Dashboard = () => {
     fetchPriceHistory,
   } = useStore();
 
+  const navigate = useNavigate();
   const [isExporting, setIsExporting] = useState(false);
   const priceFetchedRef = useRef(false);
+
+  const anniversaryList = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return cartridges
+      .filter((c) => {
+        if (!c.purchaseDate) return false;
+        const d = new Date(c.purchaseDate);
+        return d.getMonth() === currentMonth && d.getFullYear() < currentYear;
+      })
+      .map((c) => {
+        const d = new Date(c.purchaseDate);
+        const years = currentYear - d.getFullYear();
+        return { cartridge: c, years };
+      })
+      .sort((a, b) => a.years - b.years);
+  }, [cartridges]);
 
   const handleExportReport = async () => {
     if (isExporting || cartridges.length === 0) return;
@@ -96,6 +116,59 @@ const Dashboard = () => {
       <div className="mb-8">
         <StatsCard />
       </div>
+
+      {anniversaryList.length > 0 && (
+        <div className="card-pixel p-6 rounded-lg mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-pixel text-sm text-neon-amber flex items-center gap-2">
+              <Gift className="w-5 h-5" />
+              本月购入周年纪念
+            </h2>
+            <span className="font-retro text-gray-500 text-xs">
+              {anniversaryList.length} 个纪念
+            </span>
+          </div>
+          <div className="space-y-2">
+            {anniversaryList.map(({ cartridge, years }) => (
+              <button
+                key={cartridge.id}
+                onClick={() => navigate(`/collection/${cartridge.id}`)}
+                className="w-full flex items-center gap-4 p-3 rounded-lg bg-card-bg/50 hover:bg-card-bg transition-colors group text-left"
+              >
+                {cartridge.coverImage ? (
+                  <img
+                    src={cartridge.coverImage}
+                    alt={cartridge.title}
+                    className="w-10 h-10 rounded object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded bg-card-border flex items-center justify-center flex-shrink-0">
+                    <Gift className="w-5 h-5 text-gray-500" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-retro text-white text-sm truncate group-hover:text-neon-cyan transition-colors">
+                    {cartridge.title}
+                  </p>
+                  <p className="font-retro text-gray-500 text-xs">
+                    {cartridge.platform} · 购入于 {new Date(cartridge.purchaseDate).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`font-pixel text-xs px-2 py-1 rounded ${
+                    years >= 10 ? 'text-neon-amber bg-neon-amber/10' :
+                    years >= 5 ? 'text-neon-pink bg-neon-pink/10' :
+                    'text-neon-cyan bg-neon-cyan/10'
+                  }`}>
+                    {years}周年
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-neon-cyan transition-colors" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card-pixel p-6 rounded-lg mb-8">
         <div className="flex items-center justify-between mb-4">

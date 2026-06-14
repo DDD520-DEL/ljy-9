@@ -206,3 +206,32 @@ export interface CollectorLeaderboardEntry {
   completedExchanges: number;
   joinedAt: string;
 }
+
+export interface EncyclopediaGame {
+  id: string;
+  title: string;
+  platform: string;
+  series: string;
+  publisher: string;
+  developer: string;
+  releaseYear: number;
+  releaseDate: string;
+  genre: string[];
+  sales: number;
+  rating: number;
+  description: string;
+  notableFeatures: string[];
+  coverImage: string;
+  isClassic: boolean;
+}
+
+export interface EncyclopediaPlatform {
+  name: string;
+  fullName: string;
+  manufacturer: string;
+  releaseYear: number;
+  generation: string;
+  totalGames: number;
+  icon: string;
+  color: string;
+}

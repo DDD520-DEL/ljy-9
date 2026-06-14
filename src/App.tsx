@@ -12,6 +12,7 @@ import Exchange from './pages/Exchange';
 import YearlyReview from './pages/YearlyReview';
 import Wishlist from './pages/Wishlist';
 import Leaderboard from './pages/Leaderboard';
+import GameEncyclopedia from './pages/GameEncyclopedia';
 import { useStore } from './stores/useStore';
 
 function App() {
@@ -50,6 +51,7 @@ function App() {
           <Route path="/collection" element={<Collection />} />
           <Route path="/collection/add" element={<AddCartridge />} />
           <Route path="/collection/:id" element={<CartridgeDetail />} />
+          <Route path="/encyclopedia" element={<GameEncyclopedia />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/market" element={<Market />} />
           <Route path="/achievements" element={<Achievements />} />

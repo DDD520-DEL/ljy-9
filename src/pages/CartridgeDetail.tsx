@@ -17,7 +17,9 @@ import {
   Plus,
   X,
   Hash,
+  Share2,
 } from 'lucide-react';
+import ShareCardModal from '../components/ShareCardModal';
 import {
   formatPrice,
   formatDate,
@@ -40,6 +42,7 @@ const CartridgeDetail = () => {
     getPresetTags,
   } = useStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [isAddingTag, setIsAddingTag] = useState(false);
 
@@ -307,6 +310,10 @@ const CartridgeDetail = () => {
           )}
 
           <div className="flex gap-3">
+            <PixelButton variant="primary" onClick={() => setShowShareCard(true)}>
+              <Share2 className="w-4 h-4 inline mr-2" />
+              分享
+            </PixelButton>
             <PixelButton variant="cyan" onClick={() => navigate(`/collection/add?id=${id}`)}>
               <Edit3 className="w-4 h-4 inline mr-2" />
               编辑
@@ -353,6 +360,13 @@ const CartridgeDetail = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showShareCard && selectedCartridge && (
+        <ShareCardModal
+          cartridge={selectedCartridge}
+          onClose={() => setShowShareCard(false)}
+        />
       )}
     </div>
   );

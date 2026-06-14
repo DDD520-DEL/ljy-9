@@ -5,9 +5,10 @@ import Sidebar from '../components/Sidebar';
 import CartridgeCard from '../components/CartridgeCard';
 import BulkImportModal from '../components/BulkImportModal';
 import CartridgeCompareModal from '../components/CartridgeCompareModal';
-import { Filter, Grid, List, Plus, Search, SortAsc, FileText, Download, Loader2, UploadCloud, ArrowUpDown, X, CheckSquare, Check } from 'lucide-react';
+import { Filter, Grid, List, Plus, Search, SortAsc, FileText, Download, Loader2, UploadCloud, ArrowUpDown, X, CheckSquare, Check, Table } from 'lucide-react';
 import { generateReportData } from '../utils/report';
 import { exportReportPDF } from '../utils/pdfExport';
+import { exportCartridgesToExcel } from '../utils/excel';
 
 const Collection = () => {
   const {
@@ -41,6 +42,17 @@ const Collection = () => {
       console.error('导出报告失败:', error);
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (cartridges.length === 0) return;
+    
+    try {
+      exportCartridgesToExcel(cartridges);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      alert('导出Excel失败，请重试');
     }
   };
 
@@ -189,6 +201,16 @@ const Collection = () => {
                         导出报告
                       </>
                     )}
+                  </button>
+
+                  <button
+                    onClick={handleExportExcel}
+                    disabled={cartridges.length === 0}
+                    className="pixel-btn pixel-btn-cyan text-xs flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Table className="w-4 h-4" />
+                    <Download className="w-4 h-4" />
+                    导出Excel
                   </button>
 
                   <button

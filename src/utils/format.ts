@@ -87,3 +87,52 @@ export const formatRelativeTime = (dateString: string): string => {
   if (diffDays < 7) return `${diffDays}天前`;
   return formatDate(dateString);
 };
+
+const WINDOWS_ILLEGAL_CHARS = /[\\/:*?"<>|]/g;
+const WINDOWS_RESERVED_NAMES = new Set([
+  'CON', 'PRN', 'AUX', 'NUL',
+  'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+  'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9',
+]);
+
+export const sanitizeFilename = (
+  filename: string,
+  replacement: string = '_',
+  fallback: string = 'unnamed'
+): string => {
+  if (!filename) return fallback;
+
+  let cleaned = filename.replace(WINDOWS_ILLEGAL_CHARS, replacement);
+
+  cleaned = cleaned
+    .split('\n').join(replacement)
+    .split('\r').join(replacement)
+    .split('\t').join(replacement)
+    .split('\0').join(replacement);
+
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  cleaned = cleaned.replace(/\.+$/g, '');
+  cleaned = cleaned.replace(new RegExp(`${replacement}+`, 'g'), replacement);
+  cleaned = cleaned.trim();
+
+  const onlyReplacementAndSpace = new RegExp(`^[\\s${replacement.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}]+$`);
+  if (onlyReplacementAndSpace.test(cleaned)) {
+    return fallback;
+  }
+
+  const upperName = cleaned.toUpperCase();
+  if (WINDOWS_RESERVED_NAMES.has(upperName)) {
+    cleaned = `${cleaned}${replacement}file`;
+  }
+
+  if (cleaned.length === 0) {
+    return fallback;
+  }
+
+  const MAX_LENGTH = 200;
+  if (cleaned.length > MAX_LENGTH) {
+    cleaned = cleaned.substring(0, MAX_LENGTH);
+  }
+
+  return cleaned;
+};

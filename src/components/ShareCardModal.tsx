@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { X, Download, Loader2 } from 'lucide-react';
-import { formatPrice, getConditionLabel, getConditionColor, getRegionLabel } from '../utils/format';
+import { formatPrice, getConditionLabel, getConditionColor, getRegionLabel, sanitizeFilename } from '../utils/format';
 import type { Cartridge } from '../types';
 
 interface ShareCardModalProps {
@@ -39,7 +39,8 @@ const ShareCardModal = ({ cartridge, onClose }: ShareCardModalProps) => {
       });
 
       const link = document.createElement('a');
-      link.download = `${cartridge.title}_分享卡片.png`;
+      const safeTitle = sanitizeFilename(cartridge.title);
+      link.download = `${safeTitle}_分享卡片.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (error) {

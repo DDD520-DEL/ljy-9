@@ -11,6 +11,7 @@ import Showcase from './pages/Showcase';
 import Exchange from './pages/Exchange';
 import YearlyReview from './pages/YearlyReview';
 import Wishlist from './pages/Wishlist';
+import Leaderboard from './pages/Leaderboard';
 import { useStore } from './stores/useStore';
 
 function App() {
@@ -55,6 +56,7 @@ function App() {
           <Route path="/showcase" element={<Showcase />} />
           <Route path="/exchange" element={<Exchange />} />
           <Route path="/yearly-review" element={<YearlyReview />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Routes>
       </main>
     </div>

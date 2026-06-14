@@ -15,6 +15,7 @@ import {
   User,
   Sparkles,
   Heart,
+  Award,
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { formatRelativeTime } from '../utils/format';
@@ -42,6 +43,7 @@ const Navbar = () => {
     { path: '/yearly-review', label: '年度回顾', icon: Sparkles },
     { path: '/market', label: '行情中心', icon: TrendingUp },
     { path: '/achievements', label: '成就中心', icon: Trophy },
+    { path: '/leaderboard', label: '排行榜', icon: Award },
     { path: '/showcase', label: '我的展示', icon: Share2 },
     { path: '/exchange', label: '交换广场', icon: Repeat },
   ];

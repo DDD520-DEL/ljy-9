@@ -185,3 +185,21 @@ export interface WishlistItem {
   notes?: string;
   addedAt: string;
 }
+
+export interface CollectorLeaderboardEntry {
+  userId: string;
+  userName: string;
+  avatar?: string;
+  rank: number;
+  prevRank?: number;
+  collectionCount: number;
+  collectionScore: number;
+  achievementsUnlocked: number;
+  achievementsTotal: number;
+  achievementScore: number;
+  exchangeReputation: number;
+  exchangeScore: number;
+  totalScore: number;
+  completedExchanges: number;
+  joinedAt: string;
+}

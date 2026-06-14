@@ -15,6 +15,7 @@ import type {
   PriceAlert,
   PriceAlertSettings,
   WishlistItem,
+  CollectorLeaderboardEntry,
 } from '../types';
 
 interface AppState {
@@ -114,6 +115,14 @@ interface AppState {
 
   switchUser: (user: User) => void;
   getAuthHeaders: () => HeadersInit;
+
+  leaderboard: CollectorLeaderboardEntry[];
+  myLeaderboardRank: CollectorLeaderboardEntry | null;
+  leaderboardSortBy: 'totalScore' | 'collectionCount' | 'achievementScore' | 'exchangeReputation';
+
+  fetchLeaderboard: (sortBy?: 'totalScore' | 'collectionCount' | 'achievementScore' | 'exchangeReputation') => Promise<void>;
+  fetchMyLeaderboardRank: () => Promise<void>;
+  setLeaderboardSortBy: (sortBy: 'totalScore' | 'collectionCount' | 'achievementScore' | 'exchangeReputation') => void;
 }
 
 const API_BASE = '/api';
@@ -158,6 +167,9 @@ export const useStore = create<AppState>((set, get) => ({
   priceAlerts: [],
   priceAlertSettings: null,
   wishlist: [],
+  leaderboard: [],
+  myLeaderboardRank: null,
+  leaderboardSortBy: 'totalScore',
 
   getAuthHeaders: () => {
     const { currentUser } = get();
@@ -808,5 +820,39 @@ export const useStore = create<AppState>((set, get) => ({
         item.platform.toLowerCase() === platform.toLowerCase()
     );
     return item?.id || null;
+  },
+
+  fetchLeaderboard: async (sortBy) => {
+    try {
+      const currentSortBy = sortBy || get().leaderboardSortBy;
+      if (sortBy) {
+        set({ leaderboardSortBy: sortBy });
+      }
+      const res = await fetch(`${API_BASE}/leaderboard?sortBy=${currentSortBy}&limit=50`, {
+        headers: get().getAuthHeaders(),
+      });
+      const data = await res.json();
+      set({ leaderboard: data });
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+    }
+  },
+
+  fetchMyLeaderboardRank: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/leaderboard/my-rank`, {
+        headers: get().getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ myLeaderboardRank: data });
+      }
+    } catch (error) {
+      console.error('Failed to fetch my leaderboard rank:', error);
+    }
+  },
+
+  setLeaderboardSortBy: (sortBy) => {
+    set({ leaderboardSortBy: sortBy });
   },
 }));

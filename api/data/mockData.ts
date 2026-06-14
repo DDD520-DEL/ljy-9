@@ -1,4 +1,4 @@
-import type { Cartridge, PriceHistory, Achievement, ExchangeRequest, Review, Exchange, UserRating } from '../types';
+import type { Cartridge, PriceHistory, Achievement, ExchangeRequest, Review, Exchange, UserRating, CollectorLeaderboardEntry } from '../types';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -713,3 +713,94 @@ export const userRatings: UserRating[] = [
     ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 1 },
   },
 ];
+
+const collectorNames = [
+  '像素收藏家', '复古玩家小王', 'SFC收藏家', 'GB爱好者', '卡带猎人',
+  '怀旧游戏屋', 'SFC老玩家', 'FC典藏大师', 'MD骨灰粉', 'N64追梦人',
+  'NGC时光机', 'Wii运动狂', 'GBA掌机王', 'NDS探险家', '3DS魔法师',
+  'PS初代达人', 'PS2王者', 'PS3收藏家', 'PS4发烧友', 'PS5先锋',
+  'Xbox元老', 'Xbox360战士', '世嘉土星控', 'DC梦想家', 'PCE精英',
+  'NGPC掌机迷', 'WS奇妙旅', '雅达利古董商', 'ColecoVision迷',
+  'Intellivision复古派', 'NeoGeo硬核党', 'Atari Jaguar猎藏',
+  '3DO互动家', 'CD-i探险家', 'Amiga电脑迷', 'C64程序师',
+  'ZX Spectrum藏', 'MSX收藏家', 'X68000精英', 'PC Engine Fan',
+  'Game&Watch控', 'Virtual Boy狂', 'Tiger Electronics迷',
+  'Neo Geo Pocket狂', 'WonderSwan彩', 'Game Gear狂',
+  'Lynx亚得利迷', 'Nomad世嘉粉', 'Pokemon Mini狂',
+];
+
+const MAX_ACHIEVEMENTS = 12;
+
+const generateCollectorData = (): CollectorLeaderboardEntry[] => {
+  const collectors: Omit<CollectorLeaderboardEntry, 'rank' | 'prevRank' | 'totalScore' | 'collectionScore' | 'achievementScore' | 'exchangeScore'>[] = [];
+
+  for (let i = 0; i < 50; i++) {
+    const userId = `user${i + 1}`;
+    const userName = collectorNames[i] || `收藏家${i + 1}`;
+    const isTopUser = i < 5;
+    const isMidUser = i >= 5 && i < 20;
+
+    const collectionCount = isTopUser
+      ? Math.floor(150 + Math.random() * 350)
+      : isMidUser
+      ? Math.floor(50 + Math.random() * 100)
+      : Math.floor(5 + Math.random() * 50);
+
+    const achievementsUnlocked = isTopUser
+      ? Math.floor(8 + Math.random() * 5)
+      : isMidUser
+      ? Math.floor(4 + Math.random() * 5)
+      : Math.floor(1 + Math.random() * 5);
+
+    const exchangeReputation = isTopUser
+      ? Math.round((4.5 + Math.random() * 0.5) * 10) / 10
+      : isMidUser
+      ? Math.round((3.5 + Math.random() * 1.0) * 10) / 10
+      : Math.round((2.0 + Math.random() * 2.0) * 10) / 10;
+
+    const completedExchanges = isTopUser
+      ? Math.floor(20 + Math.random() * 80)
+      : isMidUser
+      ? Math.floor(5 + Math.random() * 25)
+      : Math.floor(0 + Math.random() * 10);
+
+    const daysAgo = Math.floor(Math.random() * 730) + 30;
+    const joinedDate = new Date();
+    joinedDate.setDate(joinedDate.getDate() - daysAgo);
+
+    collectors.push({
+      userId,
+      userName,
+      collectionCount,
+      achievementsUnlocked: Math.min(achievementsUnlocked, MAX_ACHIEVEMENTS),
+      achievementsTotal: MAX_ACHIEVEMENTS,
+      exchangeReputation,
+      completedExchanges,
+      joinedAt: joinedDate.toISOString(),
+    });
+  }
+
+  const maxCollection = Math.max(...collectors.map((c) => c.collectionCount));
+  const maxExchanges = Math.max(...collectors.map((c) => c.completedExchanges));
+
+  const withScores = collectors.map((c) => {
+    const collectionScore = Math.round((c.collectionCount / maxCollection) * 1000);
+    const achievementScore = Math.round((c.achievementsUnlocked / MAX_ACHIEVEMENTS) * 1000);
+    const exchangeBase = (c.exchangeReputation / 5) * 500;
+    const exchangeVolume = Math.min(c.completedExchanges / Math.max(maxExchanges, 1), 1) * 500;
+    const exchangeScore = Math.round(exchangeBase + exchangeVolume);
+    const totalScore = Math.round(collectionScore * 0.4 + achievementScore * 0.3 + exchangeScore * 0.3);
+
+    return { ...c, collectionScore, achievementScore, exchangeScore, totalScore };
+  });
+
+  withScores.sort((a, b) => b.totalScore - a.totalScore);
+
+  return withScores.map((c, idx) => ({
+    ...c,
+    rank: idx + 1,
+    prevRank: idx + 1 + Math.floor(Math.random() * 5) - 2,
+  }));
+};
+
+export const collectorLeaderboard: CollectorLeaderboardEntry[] = generateCollectorData();

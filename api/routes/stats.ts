@@ -8,4 +8,10 @@ router.get('/', (_req: Request, res: Response) => {
   res.json(stats);
 });
 
+router.get('/monthly-value', (req: Request, res: Response) => {
+  const userId = req.headers['x-user-id'] as string | undefined;
+  const data = statsService.getMonthlyValue(userId);
+  res.json(data);
+});
+
 export default router;

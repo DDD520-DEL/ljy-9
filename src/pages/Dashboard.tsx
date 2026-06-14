@@ -6,7 +6,8 @@ import CartridgeCard from '../components/CartridgeCard';
 import AchievementBadge from '../components/AchievementBadge';
 import PriceChart from '../components/PriceChart';
 import PriceAlertBanner from '../components/PriceAlertBanner';
-import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2 } from 'lucide-react';
+import CollectionValueChart from '../components/CollectionValueChart';
+import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2, BarChart3 } from 'lucide-react';
 import { generateReportData } from '../utils/report';
 import { exportReportPDF } from '../utils/pdfExport';
 
@@ -94,6 +95,17 @@ const Dashboard = () => {
 
       <div className="mb-8">
         <StatsCard />
+      </div>
+
+      <div className="card-pixel p-6 rounded-lg mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-pixel text-sm text-neon-amber flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            收藏价值月度追踪
+          </h2>
+          <span className="font-retro text-gray-500 text-xs">近6个月</span>
+        </div>
+        <CollectionValueChart />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">

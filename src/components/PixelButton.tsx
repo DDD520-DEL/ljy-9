@@ -1,6 +1,6 @@
 interface PixelButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'cyan' | 'pink';
+  variant?: 'primary' | 'cyan' | 'pink' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   onClick?: () => void;
   disabled?: boolean;
@@ -21,6 +21,7 @@ const PixelButton = ({
     primary: 'pixel-btn-primary',
     cyan: 'pixel-btn-cyan',
     pink: 'pixel-btn-pink',
+    danger: 'pixel-btn-danger',
   };
 
   const sizeClasses = {

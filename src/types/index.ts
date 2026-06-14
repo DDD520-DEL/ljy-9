@@ -173,3 +173,15 @@ export interface PriceAlertSettings {
   threshold: number;
   enabled: boolean;
 }
+
+export interface WishlistItem {
+  id: string;
+  userId: string;
+  cartridgeTitle: string;
+  platform: string;
+  cartridgeId?: string;
+  coverImage: string;
+  priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+  notes?: string;
+  addedAt: string;
+}

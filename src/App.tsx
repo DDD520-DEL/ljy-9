@@ -10,6 +10,7 @@ import Achievements from './pages/Achievements';
 import Showcase from './pages/Showcase';
 import Exchange from './pages/Exchange';
 import YearlyReview from './pages/YearlyReview';
+import Wishlist from './pages/Wishlist';
 import { useStore } from './stores/useStore';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
     fetchAchievements,
     fetchUnreadCount,
     fetchNotifications,
+    fetchWishlist,
   } = useStore();
 
   useEffect(() => {
@@ -29,6 +31,7 @@ function App() {
     fetchAchievements();
     fetchUnreadCount();
     fetchNotifications();
+    fetchWishlist();
 
     const interval = setInterval(() => {
       fetchUnreadCount();
@@ -46,6 +49,7 @@ function App() {
           <Route path="/collection" element={<Collection />} />
           <Route path="/collection/add" element={<AddCartridge />} />
           <Route path="/collection/:id" element={<CartridgeDetail />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/market" element={<Market />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/showcase" element={<Showcase />} />

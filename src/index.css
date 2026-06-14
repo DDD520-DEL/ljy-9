@@ -97,6 +97,11 @@ body {
   background: linear-gradient(180deg, #9d174d 0%, #500724 100%);
 }
 
+.pixel-btn-danger {
+  border-color: #ef4444;
+  background: linear-gradient(180deg, #991b1b 0%, #450a0a 100%);
+}
+
 .neon-glow-purple {
   text-shadow: 0 0 10px rgba(139, 92, 246, 0.8), 0 0 20px rgba(139, 92, 246, 0.4);
 }

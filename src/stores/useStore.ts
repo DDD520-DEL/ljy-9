@@ -14,6 +14,7 @@ import type {
   User,
   PriceAlert,
   PriceAlertSettings,
+  WishlistItem,
 } from '../types';
 
 interface AppState {
@@ -41,6 +42,7 @@ interface AppState {
   availableUsers: User[];
   priceAlerts: PriceAlert[];
   priceAlertSettings: PriceAlertSettings | null;
+  wishlist: WishlistItem[];
 
   fetchCartridges: () => Promise<void>;
   fetchCartridge: (id: string) => Promise<void>;
@@ -102,6 +104,14 @@ interface AppState {
   fetchPriceAlertSettings: () => Promise<void>;
   updatePriceAlertSettings: (settings: Partial<PriceAlertSettings>) => Promise<void>;
 
+  fetchWishlist: () => void;
+  addToWishlist: (data: Omit<WishlistItem, 'id' | 'userId' | 'addedAt'>) => boolean;
+  removeFromWishlist: (id: string) => void;
+  updateWishlistItem: (id: string, data: Partial<WishlistItem>) => void;
+  clearWishlist: () => void;
+  isInWishlist: (cartridgeTitle: string, platform: string) => boolean;
+  getWishlistItemId: (cartridgeTitle: string, platform: string) => string | null;
+
   switchUser: (user: User) => void;
   getAuthHeaders: () => HeadersInit;
 }
@@ -147,6 +157,7 @@ export const useStore = create<AppState>((set, get) => ({
   ],
   priceAlerts: [],
   priceAlertSettings: null,
+  wishlist: [],
 
   getAuthHeaders: () => {
     const { currentUser } = get();
@@ -168,6 +179,7 @@ export const useStore = create<AppState>((set, get) => ({
     get().fetchAllUserRatings();
     get().fetchExchanges();
     get().fetchPendingReviews();
+    get().fetchWishlist();
   },
 
   fetchCartridges: async () => {
@@ -687,5 +699,114 @@ export const useStore = create<AppState>((set, get) => ({
     } catch (error) {
       console.error('Failed to update price alert settings:', error);
     }
+  },
+
+  fetchWishlist: () => {
+    try {
+      const { currentUser } = get();
+      const storageKey = `wishlist_${currentUser.id}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const wishlist = JSON.parse(stored) as WishlistItem[];
+        set({ wishlist });
+      } else {
+        set({ wishlist: [] });
+      }
+    } catch (error) {
+      console.error('Failed to fetch wishlist:', error);
+      set({ wishlist: [] });
+    }
+  },
+
+  addToWishlist: (data) => {
+    try {
+      const { currentUser, wishlist, isInWishlist } = get();
+
+      if (isInWishlist(data.cartridgeTitle, data.platform)) {
+        return false;
+      }
+
+      const newItem: WishlistItem = {
+        id: `wishlist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: currentUser.id,
+        addedAt: new Date().toISOString(),
+        priority: data.priority || 'MEDIUM',
+        notes: data.notes,
+        cartridgeId: data.cartridgeId,
+        coverImage: data.coverImage,
+        cartridgeTitle: data.cartridgeTitle,
+        platform: data.platform,
+      };
+
+      const updatedWishlist = [newItem, ...wishlist];
+      set({ wishlist: updatedWishlist });
+
+      const storageKey = `wishlist_${currentUser.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(updatedWishlist));
+
+      return true;
+    } catch (error) {
+      console.error('Failed to add to wishlist:', error);
+      return false;
+    }
+  },
+
+  removeFromWishlist: (id) => {
+    try {
+      const { currentUser, wishlist } = get();
+      const updatedWishlist = wishlist.filter((item) => item.id !== id);
+      set({ wishlist: updatedWishlist });
+
+      const storageKey = `wishlist_${currentUser.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(updatedWishlist));
+    } catch (error) {
+      console.error('Failed to remove from wishlist:', error);
+    }
+  },
+
+  updateWishlistItem: (id, data) => {
+    try {
+      const { currentUser, wishlist } = get();
+      const updatedWishlist = wishlist.map((item) =>
+        item.id === id ? { ...item, ...data } : item
+      );
+      set({ wishlist: updatedWishlist });
+
+      const storageKey = `wishlist_${currentUser.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(updatedWishlist));
+    } catch (error) {
+      console.error('Failed to update wishlist item:', error);
+    }
+  },
+
+  clearWishlist: () => {
+    try {
+      const { currentUser } = get();
+      set({ wishlist: [] });
+
+      const storageKey = `wishlist_${currentUser.id}`;
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.error('Failed to clear wishlist:', error);
+    }
+  },
+
+  isInWishlist: (cartridgeTitle, platform) => {
+    const { wishlist } = get();
+    return wishlist.some(
+      (item) =>
+        item.cartridgeTitle.toLowerCase() === cartridgeTitle.toLowerCase() &&
+        item.platform.toLowerCase() === platform.toLowerCase()
+    );
+  },
+
+  getWishlistItemId: (cartridgeTitle, platform) => {
+    const { wishlist } = get();
+    const item = wishlist.find(
+      (item) =>
+        item.cartridgeTitle.toLowerCase() === cartridgeTitle.toLowerCase() &&
+        item.platform.toLowerCase() === platform.toLowerCase()
+    );
+    return item?.id || null;
   },
 }));

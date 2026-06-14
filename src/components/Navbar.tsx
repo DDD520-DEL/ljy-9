@@ -14,6 +14,7 @@ import {
   ArrowRight,
   User,
   Sparkles,
+  Heart,
 } from 'lucide-react';
 import { useStore } from '../stores/useStore';
 import { formatRelativeTime } from '../utils/format';
@@ -28,6 +29,7 @@ const Navbar = () => {
     fetchUnreadCount,
     markNotificationAsRead,
     markAllNotificationsAsRead,
+    wishlist,
   } = useStore();
 
   const [showPanel, setShowPanel] = useState(false);
@@ -36,6 +38,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: '仪表盘', icon: LayoutDashboard },
     { path: '/collection', label: '藏品库', icon: Library },
+    { path: '/wishlist', label: '愿望单', icon: Heart, badge: wishlist.length },
     { path: '/yearly-review', label: '年度回顾', icon: Sparkles },
     { path: '/market', label: '行情中心', icon: TrendingUp },
     { path: '/achievements', label: '成就中心', icon: Trophy },
@@ -97,7 +100,7 @@ const Navbar = () => {
               to={item.path}
               end={item.path === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-4 py-2 font-retro text-lg transition-all duration-200 border-2 ${
+                `relative flex items-center gap-2 px-4 py-2 font-retro text-lg transition-all duration-200 border-2 ${
                   isActive
                     ? 'bg-neon-purple/20 border-neon-purple text-neon-purple shadow-neon-purple'
                     : 'border-transparent text-gray-400 hover:text-white hover:bg-white/5'
@@ -106,6 +109,11 @@ const Navbar = () => {
             >
               <item.icon className="w-5 h-5" />
               <span className="hidden md:inline">{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-neon-pink text-white text-[10px] font-pixel rounded-full flex items-center justify-center border-2 border-darker-navy">
+                  {item.badge > 99 ? '99+' : item.badge}
+                </span>
+              )}
             </NavLink>
           ))}
         </div>

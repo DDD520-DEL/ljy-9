@@ -19,6 +19,7 @@ import {
   AlertCircle,
   History,
   MessageSquare,
+  Heart,
 } from 'lucide-react';
 import { formatDate, getConditionLabel } from '../utils/format';
 import type { Exchange, Review as ReviewType } from '../types';
@@ -32,6 +33,7 @@ const Exchange = () => {
     reviews,
     exchanges,
     pendingReviews,
+    wishlist,
     fetchExchangeRequests,
     fetchMatches,
     addExchangeRequest,
@@ -44,6 +46,10 @@ const Exchange = () => {
     fetchPendingReviews,
     completeExchange,
     createExchange,
+    isInWishlist,
+    addToWishlist,
+    removeFromWishlist,
+    getWishlistItemId,
   } = useStore();
 
   const [activeTab, setActiveTab] = useState<'all' | 'want' | 'have' | 'matches' | 'my-exchanges'>('all');
@@ -83,6 +89,31 @@ const Exchange = () => {
       condition: 'VERY_GOOD',
       description: '',
     });
+  };
+
+  const handleToggleWishlist = (
+    e: React.MouseEvent,
+    cartridgeTitle: string,
+    platform: string,
+    coverImage?: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isInWishlist(cartridgeTitle, platform)) {
+      const itemId = getWishlistItemId(cartridgeTitle, platform);
+      if (itemId) {
+        removeFromWishlist(itemId);
+      }
+    } else {
+      addToWishlist({
+        cartridgeTitle,
+        platform,
+        coverImage:
+          coverImage ||
+          `https://picsum.photos/seed/${encodeURIComponent(cartridgeTitle)}/200/200`,
+        priority: 'MEDIUM',
+      });
+    }
   };
 
   const handleStartExchange = async (match: any) => {
@@ -257,10 +288,15 @@ const Exchange = () => {
               const matchRequest = exchangeRequests.find((r) => r.id === match.matchRequestId);
               if (!matchRequest) return null;
               const rating = getUserRating(match.matchUserId);
+              const inWishlist = isInWishlist(matchRequest.cartridgeTitle, matchRequest.platform);
               return (
                 <div
                   key={match.requestId + match.matchRequestId}
-                  className="bg-darker-navy/50 p-4 rounded-lg border border-neon-green/20"
+                  className={`bg-darker-navy/50 p-4 rounded-lg border transition-all ${
+                    inWishlist
+                      ? 'border-neon-pink/50 ring-2 ring-neon-pink/40 shadow-neon-pink'
+                      : 'border-neon-green/20'
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 rounded-full bg-neon-purple/30 flex items-center justify-center">
@@ -275,12 +311,43 @@ const Exchange = () => {
                         <UserRatingBadge rating={rating} showCount size="sm" />
                       </button>
                     </div>
-                    <span className="px-2 py-0.5 bg-neon-green/20 text-neon-green font-pixel text-xs rounded">
-                      {match.score}%匹配
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {inWishlist && (
+                        <span className="px-2 py-0.5 bg-neon-pink/20 text-neon-pink font-pixel text-[10px] rounded flex items-center gap-1" title="愿望单中">
+                          <Heart className="w-3 h-3 fill-neon-pink" />
+                          愿望
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 bg-neon-green/20 text-neon-green font-pixel text-xs rounded">
+                        {match.score}%匹配
+                      </span>
+                    </div>
                   </div>
-                  <p className="font-pixel text-xs text-white mb-1">{matchRequest.cartridgeTitle}</p>
-                  <p className="font-retro text-gray-400 text-sm mb-2">{match.details}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-pixel text-xs text-white mb-1 truncate">
+                        {matchRequest.cartridgeTitle}
+                      </p>
+                      <p className="font-retro text-gray-400 text-sm mb-2">{match.details}</p>
+                    </div>
+                    <button
+                      onClick={(e) =>
+                        handleToggleWishlist(
+                          e,
+                          matchRequest.cartridgeTitle,
+                          matchRequest.platform
+                        )
+                      }
+                      className={`w-7 h-7 rounded border-2 flex items-center justify-center transition-all hover:scale-110 flex-shrink-0 ${
+                        inWishlist
+                          ? 'bg-neon-pink border-neon-pink text-white'
+                          : 'bg-darker-navy/90 border-gray-500 text-gray-400 hover:border-neon-pink hover:text-neon-pink'
+                      }`}
+                      title={inWishlist ? '从愿望单移除' : '加入愿望单'}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${inWishlist ? 'fill-white' : ''}`} />
+                    </button>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span
                       className={`px-2 py-0.5 text-xs font-pixel rounded ${
@@ -425,12 +492,17 @@ const Exchange = () => {
               const matchRequest = exchangeRequests.find((r) => r.id === match.matchRequestId);
               if (!matchRequest) return null;
               const rating = getUserRating(match.matchUserId);
+              const inWishlist = isInWishlist(matchRequest.cartridgeTitle, matchRequest.platform);
               return (
                 <div
                   key={match.requestId + match.matchRequestId}
-                  className="card-pixel p-5 rounded-lg flex items-center gap-6"
+                  className={`card-pixel p-5 rounded-lg flex items-center gap-6 transition-all ${
+                    inWishlist
+                      ? 'border-neon-pink/50 ring-2 ring-neon-pink/40 shadow-neon-pink'
+                      : ''
+                  }`}
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <div className="w-10 h-10 rounded-full bg-neon-purple/30 flex items-center justify-center">
                         <User className="w-5 h-5 text-neon-purple" />
@@ -443,9 +515,15 @@ const Exchange = () => {
                           <UserRatingBadge rating={rating} showCount size="sm" />
                         </button>
                       </div>
+                      {inWishlist && (
+                        <span className="px-2 py-0.5 bg-neon-pink/20 text-neon-pink font-pixel text-[10px] rounded flex items-center gap-1" title="愿望单中">
+                          <Heart className="w-3 h-3 fill-neon-pink" />
+                          愿望单中
+                        </span>
+                      )}
                       <p className="font-retro text-gray-500 text-sm">{match.details}</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <span
                         className={`px-2 py-0.5 text-xs font-pixel rounded ${
                           matchRequest.type === 'WANT'
@@ -461,11 +539,32 @@ const Exchange = () => {
                       <span className="font-retro text-gray-500 text-sm">
                         {matchRequest.platform}
                       </span>
+                      <button
+                        onClick={(e) =>
+                          handleToggleWishlist(
+                            e,
+                            matchRequest.cartridgeTitle,
+                            matchRequest.platform
+                          )
+                        }
+                        className={`w-7 h-7 rounded border-2 flex items-center justify-center transition-all hover:scale-110 ${
+                          inWishlist
+                            ? 'bg-neon-pink border-neon-pink text-white'
+                            : 'bg-darker-navy/90 border-gray-500 text-gray-400 hover:border-neon-pink hover:text-neon-pink'
+                        }`}
+                        title={inWishlist ? '从愿望单移除' : '加入愿望单'}
+                      >
+                        <Heart className={`w-3.5 h-3.5 ${inWishlist ? 'fill-white' : ''}`} />
+                      </button>
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className="w-16 h-16 rounded-full border-4 border-neon-green flex items-center justify-center mb-1">
-                      <span className="font-pixel text-lg text-neon-green">{match.score}%</span>
+                  <div className="text-center flex-shrink-0">
+                    <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center mb-1 ${
+                      inWishlist ? 'border-neon-pink' : 'border-neon-green'
+                    }`}>
+                      <span className={`font-pixel text-lg ${inWishlist ? 'text-neon-pink' : 'text-neon-green'}`}>
+                        {match.score}%
+                      </span>
                     </div>
                     <p className="font-retro text-gray-500 text-xs">匹配度</p>
                   </div>
@@ -484,18 +583,44 @@ const Exchange = () => {
         </div>
       ) : (
         <div className="space-y-4">
+          {wishlist.length > 0 && (
+            <div className="card-pixel p-4 rounded-lg mb-4 border-neon-pink/30 bg-neon-pink/5">
+              <div className="flex items-center gap-2">
+                <Heart className="w-5 h-5 text-neon-pink fill-neon-pink" />
+                <span className="font-pixel text-xs text-neon-pink">
+                  愿望单中有 {wishlist.length} 个游戏，匹配到的交换请求会高亮显示
+                </span>
+              </div>
+            </div>
+          )}
           {filteredRequests.length > 0 ? (
             filteredRequests.map((request) => {
               const rating = getUserRating(request.userId);
+              const inWishlist = isInWishlist(request.cartridgeTitle, request.platform);
               return (
                 <div
                   key={request.id}
-                  className="card-pixel p-5 rounded-lg flex items-start gap-4"
+                  className={`card-pixel p-5 rounded-lg flex items-start gap-4 transition-all ${
+                    inWishlist
+                      ? 'border-neon-pink/50 ring-2 ring-neon-pink/40 shadow-neon-pink relative overflow-hidden'
+                      : ''
+                  }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-neon-purple to-neon-pink flex items-center justify-center flex-shrink-0">
+                  {inWishlist && (
+                    <div className="absolute top-0 right-0 w-20 h-20">
+                      <div className="absolute top-0 right-0 w-20 bg-neon-pink/90 text-white font-pixel text-[10px] text-center py-1 transform rotate-45 translate-x-6 -translate-y-0 shadow-lg">
+                        愿望单
+                      </div>
+                    </div>
+                  )}
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    inWishlist
+                      ? 'bg-gradient-to-br from-neon-pink to-neon-amber'
+                      : 'bg-gradient-to-br from-neon-purple to-neon-pink'
+                  }`}>
                     <User className="w-6 h-6 text-white" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <span className="font-retro text-white">{request.userName}</span>
                       <button
@@ -512,24 +637,53 @@ const Exchange = () => {
                       >
                         {request.type === 'WANT' ? '求购' : '出让'}
                       </span>
+                      {inWishlist && (
+                        <span className="px-2 py-0.5 bg-neon-pink/20 text-neon-pink font-pixel text-[10px] rounded flex items-center gap-1">
+                          <Heart className="w-3 h-3 fill-neon-pink" />
+                          你想要的
+                        </span>
+                      )}
                       <span className="font-retro text-gray-500 text-sm">
                         {formatDate(request.createdAt)}
                       </span>
                     </div>
-                    <h3 className="font-pixel text-sm text-white mb-1">
-                      {request.cartridgeTitle}
-                    </h3>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-2 py-0.5 bg-neon-purple/20 text-neon-purple font-pixel text-xs rounded">
-                        {request.platform}
-                      </span>
-                      <span className="font-retro text-gray-400 text-sm">
-                        品相：{getConditionLabel(request.condition)}
-                      </span>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-pixel text-sm mb-1 ${
+                          inWishlist ? 'text-neon-pink neon-glow-pink' : 'text-white'
+                        }`}>
+                          {request.cartridgeTitle}
+                        </h3>
+                        <div className="flex items-center gap-3 mb-2 flex-wrap">
+                          <span className="px-2 py-0.5 bg-neon-purple/20 text-neon-purple font-pixel text-xs rounded">
+                            {request.platform}
+                          </span>
+                          <span className="font-retro text-gray-400 text-sm">
+                            品相：{getConditionLabel(request.condition)}
+                          </span>
+                        </div>
+                        <p className="font-retro text-gray-400">{request.description}</p>
+                      </div>
+                      <button
+                        onClick={(e) =>
+                          handleToggleWishlist(
+                            e,
+                            request.cartridgeTitle,
+                            request.platform
+                          )
+                        }
+                        className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center transition-all hover:scale-110 flex-shrink-0 ${
+                          inWishlist
+                            ? 'bg-neon-pink border-neon-pink text-white'
+                            : 'bg-darker-navy/90 border-gray-500 text-gray-400 hover:border-neon-pink hover:text-neon-pink'
+                        }`}
+                        title={inWishlist ? '从愿望单移除' : '加入愿望单'}
+                      >
+                        <Heart className={`w-4 h-4 ${inWishlist ? 'fill-white' : ''}`} />
+                      </button>
                     </div>
-                    <p className="font-retro text-gray-400">{request.description}</p>
                   </div>
-                  <PixelButton variant="primary" size="sm">
+                  <PixelButton variant={inWishlist ? 'danger' : 'primary'} size="sm">
                     <Repeat className="w-4 h-4 inline mr-1" />
                     交换
                   </PixelButton>

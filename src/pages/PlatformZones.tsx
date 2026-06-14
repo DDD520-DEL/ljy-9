@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useStore } from '../stores/useStore';
 import { useNavigate } from 'react-router-dom';
-import type { EncyclopediaPlatform, Cartridge } from '../types';
+import type { EncyclopediaPlatform } from '../types';
 import {
   Gamepad2,
   Package,
@@ -54,7 +54,7 @@ const getRarityIcon = (condition: string) => {
 
 const PlatformZones = () => {
   const navigate = useNavigate();
-  const { cartridges, platforms: availablePlatforms } = useStore();
+  const { cartridges, setFilters } = useStore();
 
   const safeCartridges = Array.isArray(cartridges) ? cartridges : [];
 
@@ -109,6 +109,7 @@ const PlatformZones = () => {
   }, [platformStats]);
 
   const handleGoToCollection = (platformName: string) => {
+    setFilters({ platform: [platformName], series: [], publisher: [], condition: [], tags: [], search: '' });
     navigate('/collection');
   };
 

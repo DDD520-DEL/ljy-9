@@ -113,6 +113,8 @@ interface AppState {
   clearWishlist: () => void;
   isInWishlist: (cartridgeTitle: string, platform: string) => boolean;
   getWishlistItemId: (cartridgeTitle: string, platform: string) => string | null;
+  exportWishlist: () => void;
+  importWishlist: (jsonData: string) => { success: boolean; imported: number; skipped: number; error?: string };
 
   switchUser: (user: User) => void;
   getAuthHeaders: () => HeadersInit;
@@ -857,6 +859,74 @@ export const useStore = create<AppState>((set, get) => ({
         item.platform.toLowerCase() === platform.toLowerCase()
     );
     return item?.id || null;
+  },
+
+  exportWishlist: () => {
+    try {
+      const { currentUser, wishlist } = get();
+      const exportData = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        userId: currentUser.id,
+        userName: currentUser.name,
+        itemCount: wishlist.length,
+        items: wishlist.map(({ id, userId, ...rest }) => rest),
+      };
+      const json = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `wishlist_backup_${currentUser.id}_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export wishlist:', error);
+    }
+  },
+
+  importWishlist: (jsonData) => {
+    try {
+      const parsed = JSON.parse(jsonData);
+      if (!parsed.items || !Array.isArray(parsed.items)) {
+        return { success: false, imported: 0, skipped: 0, error: '无效的备份文件格式' };
+      }
+      const { currentUser, wishlist, isInWishlist } = get();
+      let imported = 0;
+      let skipped = 0;
+      const updatedWishlist = [...wishlist];
+      for (const item of parsed.items) {
+        if (!item.cartridgeTitle || !item.platform) {
+          skipped++;
+          continue;
+        }
+        if (isInWishlist(item.cartridgeTitle, item.platform)) {
+          skipped++;
+          continue;
+        }
+        const newItem: WishlistItem = {
+          id: `wishlist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: currentUser.id,
+          cartridgeTitle: item.cartridgeTitle,
+          platform: item.platform,
+          cartridgeId: item.cartridgeId,
+          coverImage: item.coverImage || '',
+          priority: item.priority || 'MEDIUM',
+          notes: item.notes,
+          addedAt: new Date().toISOString(),
+        };
+        updatedWishlist.push(newItem);
+        imported++;
+      }
+      set({ wishlist: updatedWishlist });
+      const storageKey = `wishlist_${currentUser.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(updatedWishlist));
+      return { success: true, imported, skipped };
+    } catch (error: any) {
+      return { success: false, imported: 0, skipped: 0, error: 'JSON解析失败，请检查文件内容' };
+    }
   },
 
   fetchLeaderboard: async (sortBy) => {

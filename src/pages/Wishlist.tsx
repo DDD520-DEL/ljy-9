@@ -15,6 +15,9 @@ import {
   Star,
   Calendar,
   Search,
+  Download,
+  Upload,
+  CheckCircle,
 } from 'lucide-react';
 import { formatDate } from '../utils/format';
 import type { WishlistItem } from '../types';
@@ -29,6 +32,8 @@ const Wishlist = () => {
     clearWishlist,
     fetchWishlist,
     isInWishlist,
+    exportWishlist,
+    importWishlist,
   } = useStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -38,6 +43,8 @@ const Wishlist = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [importResult, setImportResult] = useState<{ success: boolean; imported: number; skipped: number; error?: string } | null>(null);
 
   const [newItem, setNewItem] = useState({
     cartridgeTitle: '',
@@ -121,6 +128,24 @@ const Wishlist = () => {
     setEditingPriority('MEDIUM');
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      const result = importWishlist(text);
+      setImportResult(result);
+      setShowImportConfirm(false);
+    };
+    reader.onerror = () => {
+      setImportResult({ success: false, imported: 0, skipped: 0, error: '文件读取失败' });
+      setShowImportConfirm(false);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const filteredWishlist = wishlist.filter((item) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -164,6 +189,22 @@ const Wishlist = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {wishlist.length > 0 && (
+            <PixelButton
+              variant="cyan"
+              onClick={exportWishlist}
+            >
+              <Download className="w-4 h-4 inline mr-2" />
+              导出备份
+            </PixelButton>
+          )}
+          <PixelButton
+            variant="cyan"
+            onClick={() => { setShowImportConfirm(true); setImportResult(null); }}
+          >
+            <Upload className="w-4 h-4 inline mr-2" />
+            导入恢复
+          </PixelButton>
           {wishlist.length > 0 && (
             <PixelButton
               variant="danger"
@@ -570,6 +611,88 @@ const Wishlist = () => {
               >
                 <Trash2 className="w-4 h-4 inline mr-1" />
                 确认清空
+              </PixelButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showImportConfirm && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="card-pixel p-6 rounded-lg max-w-md w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-neon-cyan/20 flex items-center justify-center">
+                <Upload className="w-6 h-6 text-neon-cyan" />
+              </div>
+              <div>
+                <h3 className="font-pixel text-sm text-white">导入愿望单备份</h3>
+                <p className="font-retro text-xs text-gray-400">
+                  选择之前导出的JSON文件恢复愿望单数据
+                </p>
+              </div>
+            </div>
+            <div className="p-4 bg-darker-navy rounded-lg border border-neon-cyan/20 mb-4">
+              <p className="font-retro text-xs text-gray-400 mb-2">导入说明：</p>
+              <ul className="font-retro text-xs text-gray-500 space-y-1">
+                <li>· 仅支持本应用导出的JSON备份文件</li>
+                <li>· 已存在的愿望（名称+平台相同）会自动跳过</li>
+                <li>· 导入的数据会追加到当前愿望单，不会覆盖</li>
+              </ul>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <PixelButton
+                variant="primary"
+                onClick={() => setShowImportConfirm(false)}
+              >
+                取消
+              </PixelButton>
+              <label className="pixel-btn pixel-btn-cyan cursor-pointer inline-flex items-center">
+                <Upload className="w-4 h-4 inline mr-2" />
+                选择文件
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {importResult && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="card-pixel p-6 rounded-lg max-w-md w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                importResult.success ? 'bg-green-500/20' : 'bg-red-500/20'
+              }`}>
+                {importResult.success ? (
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                ) : (
+                  <AlertCircle className="w-6 h-6 text-red-400" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-pixel text-sm text-white">
+                  {importResult.success ? '导入完成' : '导入失败'}
+                </h3>
+                {importResult.error ? (
+                  <p className="font-retro text-xs text-red-400">{importResult.error}</p>
+                ) : (
+                  <p className="font-retro text-xs text-gray-400">
+                    成功导入 {importResult.imported} 项，跳过 {importResult.skipped} 项（已存在或格式无效）
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <PixelButton
+                variant="cyan"
+                onClick={() => setImportResult(null)}
+              >
+                确定
               </PixelButton>
             </div>
           </div>

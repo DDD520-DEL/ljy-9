@@ -39,7 +39,7 @@ const Accessories = () => {
   const [searchInput, setSearchInput] = useState('');
   const [currentView, setCurrentView] = useState<'grid' | 'list'>('grid');
 
-  const conditions = ['MINT', 'NEAR_MINT', 'VERY_GOOD', 'FAIR', 'POOR'];
+  const conditions = ['MINT', 'NEAR_MINT', 'VERY_GOOD', 'GOOD', 'FAIR', 'POOR'];
 
   useEffect(() => {
     fetchAccessories();

@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import StatsCard from '../components/StatsCard';
 import CartridgeCard from '../components/CartridgeCard';
+import AccessoryCard from '../components/AccessoryCard';
 import AchievementBadge from '../components/AchievementBadge';
 import PriceChart from '../components/PriceChart';
 import PriceAlertBanner from '../components/PriceAlertBanner';
 import CollectionValueChart from '../components/CollectionValueChart';
-import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2, BarChart3, Gift, ChevronRight } from 'lucide-react';
+import { Plus, ArrowRight, TrendingUp, Award, FileText, Download, Loader2, BarChart3, Gift, ChevronRight, Package } from 'lucide-react';
 import { generateReportData } from '../utils/report';
 import { exportReportPDF } from '../utils/pdfExport';
 
@@ -263,6 +264,34 @@ const Dashboard = () => {
         ) : (
           <div className="h-48 flex items-center justify-center text-gray-500 font-retro">
             暂无收藏，快去添加你的第一张卡带吧！
+          </div>
+        )}
+      </div>
+
+      <div className="card-pixel p-6 rounded-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-pixel text-sm text-neon-pink flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            最近添加配件
+          </h2>
+          <Link
+            to="/accessories/add"
+            className="pixel-btn pixel-btn-primary text-xs flex items-center gap-2"
+            style={{ borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)' }}
+          >
+            <Plus className="w-4 h-4" />
+            添加配件
+          </Link>
+        </div>
+        {(stats?.recentAccessories?.length || 0) > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {stats!.recentAccessories!.map((accessory) => (
+              <AccessoryCard key={accessory.id} accessory={accessory} />
+            ))}
+          </div>
+        ) : (
+          <div className="h-48 flex items-center justify-center text-gray-500 font-retro">
+            暂无配件收藏
           </div>
         )}
       </div>
